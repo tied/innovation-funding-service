@@ -102,7 +102,15 @@ Documentation     INFUND-2945 As a Competition Executive I want to be able to cr
 ...
 ...               IFS-8779 Subsidy Control - Create a New Competition - Initial Details
 ...
+...               IFS-6775 Initial details type ahead
+...
 ...               IFS-8791 Subsidy Control - Create a New Competition - Funding Eligibility and Funding Levels
+...
+...               IFS-9214 Add dual T&Cs to Subsidy Control Competitions
+...
+...               IFS-9482 Loans: Comp setup - new question in Project details section
+...
+...               IFS-8847 Always open competitions: new comp setup configuration
 ...
 Suite Setup       Custom suite setup
 Suite Teardown    Custom suite teardown
@@ -140,7 +148,7 @@ User can create a new competition
     And The user should see the element        jQuery = p:contains("When complete, this competition will open on the date set in Milestones.")
 
 Initial details - User enters valid values and marks as done
-    [Documentation]  INFUND-2982  INFUND-3888  INFUND-2983  INFUND-6478  INFUND-6479  IFS-4982  IFS-8779
+    [Documentation]  INFUND-2982  INFUND-3888  INFUND-2983  INFUND-6478  INFUND-6479  IFS-4982  IFS-8779 IFS-6775
     [Tags]  HappyPath
     Given the user clicks the button/link                       link = Initial details
     And the user clicks the button/link                         jQuery = button:contains("+ add another innovation area")
@@ -165,11 +173,11 @@ Initial Details - User can remove an innovation area
     Then the user should not see the element    jQuery = dd:contains("Space technology")
 
 Initial Details - drop down menu is populated with comp admin users
-    [Documentation]    INFUND-6905
+    [Documentation]    INFUND-6905, IFS-6775
     [Tags]
-    [Setup]    the user clicks the button/link                   jQuery = .govuk-button:contains("Edit")
-    When the user should see the option in the drop-down menu    John Doe    name = executiveUserId
-    And the user should see the option in the drop-down menu     Robert Johnson    name = executiveUserId
+    [Setup]    the user clicks the button/link     jQuery = .govuk-button:contains("Edit")
+    When the user sees element in type ahead       executiveUserId  j  John Doe
+    And the user sees element in type ahead        executiveUserId  r  Robert Johnson
 
 Initial details - Comp Type, funding rule and Date should not be editable
     [Documentation]    INFUND-2985, INFUND-3182, INFUND-4892,  IFS-8779
@@ -199,13 +207,17 @@ User should have access to all the sections
     And The user should see the element      jQuery = h2:contains("Competition access") ~ ul a:contains("Innovation leads")
 
 The user must select the Terms and Conditions they want Applicants to accept
-    [Documentation]  IFS-3086  IFS-6205
+    [Documentation]  IFS-3086  IFS-6205  IFS-9214
     [Tags]  HappyPath
-    Given the user clicks the button/link    link = Terms and conditions
-    When the user should see the element     link = Loans (opens in a new window)
-    And the user clicks the button/link      jQuery = button:contains("Done")
-    And the user clicks the button/link      link = Back to competition details
-    And the user should see the element      jQuery = li:contains("Terms and conditions") .task-status-complete
+    Given the user clicks the button/link     link = Terms and conditions
+    When the user should see the element      link = Loans (opens in a new window)
+    And the user clicks the button/link       jQuery = button:contains("Done")
+    And the user clicks the button twice      jQuery = label:contains("Loans")
+    And the user clicks the button/link       jQuery = button:contains("Done")
+    And the user should see the element       jQuery = dt:contains("Subsidy control terms and conditions") ~ dd:contains("Loans")
+    And the user should see the element       jQuery = dt:contains("State aid terms and conditions") ~ dd:contains("Loans")
+    And the user clicks the button/link       link = Return to setup overview
+    And the user should see the element       jQuery = li:contains("Terms and conditions") .task-status-complete
 
 Internal user can navigate to Public Content without having any issues
     [Documentation]  INFUND-6922
@@ -333,9 +345,9 @@ Funding eligibility: Mark as Done
     And the user clicks the button/link           jQuery = button:contains("Done")
     And the user should see the element           jQuery = p:contains("Set the maximum funding level percentage for the business sizes for each research category.")
     And the user should see the element           jQuery = p:contains("You can only use whole numbers from 0 to 100.")
-    And the user should see the element           jQuery = td:contains("Micro entity or small company")
-    And the user should see the element           jQuery = td:contains("Medium-sized company")
-    And the user should see the element           jQuery = td:contains("Large-sized company")
+    And the user should see the element           jQuery = td:contains("Micro or small")
+    And the user should see the element           jQuery = td:contains("Medium")
+    And the user should see the element           jQuery = td:contains("Large")
     And the user enters text to a text field      maximums[0][0].maximum  75
     And the user enters text to a text field      maximums[0][1].maximum  75
     And the user enters text to a text field      maximums[1][0].maximum  75
@@ -346,15 +358,17 @@ Funding eligibility: Mark as Done
     Then The user clicks the button/link          link = Return to setup overview
 
 Milestones: Page should contain the correct fields
-    [Documentation]    INFUND-2993
+    [Documentation]    INFUND-2993  IFS-8847
     [Tags]
-    Given the user clicks the button/link           link = Milestones
-    Then the user should see the element            jQuery = h1:contains("Completion stage")
-    And the user should see the element             jQuery = label:contains("Release feedback")
-    And the user should see the element             jQuery = label:contains("Project setup")
-    And the user selects the radio button           selectedCompletionStage  PROJECT_SETUP
-    And the user clicks the button/link             jQuery = button:contains("Done")
-    And the pre-field date should be correct
+    Given the user clicks the button/link         link = Milestones
+    And the user should see the element           jQuery = h1:contains("Completion stage")
+    And the user should see the element           jQuery = label:contains("Release feedback")
+    And the user should see the element           jQuery = label:contains("Project setup")
+    When the user selects the radio button        selectedCompletionStage  PROJECT_SETUP
+    And the user clicks the button/link           jQuery = button:contains("Done")
+    And the user clicks the button twice          jQuery = label:contains("No")
+    And the user clicks the button/link           jQuery = button:contains("Save and continue")
+    Then the pre-field date should be correct
 
 Milestones: Correct Weekdays should show
     [Documentation]    INFUND-2993
@@ -442,7 +456,16 @@ Application: Application details
     And the user should see the element             jQuery = dt:contains("Maximum") + dd:contains("84")
     [Teardown]  the user clicks the button/link     link = Application
 
-External user edits the EDI question.
+Project details: Business and financial information
+    [Documentation]  INF-9482
+    Given the user clicks the button/link           link = Business and financial information
+    And the user should see the element             jQuery = h1:contains("Business and financial information")
+    When the user enters text to a text field       id = question.guidanceTitle  Guidance title
+    And the user enters text to a text field        css = label[for="question.guidance"] + * .editor  Guidance text
+    And The user clicks the button/link             jQuery = button:contains('Done')
+    Then the user should see the element            jQuery = li:contains("Business and financial information") .task-status-complete
+
+External user edits the EDI question
     [Documentation]  IFS-7700  IFS-8522
     Given the user marks each question as complete     Equality, diversity and inclusion
     And the user clicks the button/link                link = Equality, diversity and inclusion
@@ -749,7 +772,7 @@ User deletes the competition
 
 User deletes the competition on completing all competition details
     [Documentation]  IFS-8496
-    Given the comp admin creates competition with all sections details    ${business_type_id}  Competition to Delete  EOI  ${compType_Programme}  NOT_AID  GRANT  PROJECT_SETUP  no  1  true  collaborative
+    Given the comp admin creates competition with all sections details    ${business_type_id}  Competition to Delete  EOI  ${compType_Programme}  NOT_AID  GRANT  PROJECT_SETUP  no  1  true  collaborative  No
     When the user clicks the button/link                                  link = Delete competition
     And the user clicks the button/link                                   css = .delete-modal button[type="submit"]
     And the user navigates to the page                                    ${CA_UpcomingComp}
@@ -868,22 +891,22 @@ the resubmission should not have a default selection
     the user should see the element  css=[name="resubmission"]:not(:checked) ~ label
 
 The user enters valid data in the initial details
-    Given the user enters text to a text field                 css = #title  ${competitionTitle}
-    And the user selects the radio button                      fundingType  LOAN
-    When the user selects the option from the drop-down menu   Sector  id = competitionTypeId
-    And the user selects the radio button                      fundingRule  SUBSIDY_CONTROL
-    And the user selects the option from the drop-down menu    Infrastructure systems  id = innovationSectorCategoryId
-    And the user selects the value from the drop-down menu     32   name = innovationAreaCategoryIds[0]
-    And the user selects the option from the drop-down menu    Open  id = innovationSectorCategoryId
-    And the user selects the value from the drop-down menu     19     name = innovationAreaCategoryIds[0]
-    And the user selects the option from the drop-down menu    Emerging and enabling  id = innovationSectorCategoryId
-    And the user selects the value from the drop-down menu     6  name = innovationAreaCategoryIds[0]
-    And the user selects the value from the drop-down menu     15  name = innovationAreaCategoryIds[1]
-    And the user enters text to a text field                   id = openingDateDay    10
-    And the user enters text to a text field                   id = openingDateMonth    1
-    And the user enters text to a text field                   id = openingDateYear     ${nextyear}
-    And the user selects the option from the drop-down menu    Ian Cooper    id = innovationLeadUserId
-    And the user selects the option from the drop-down menu    John Doe   id = executiveUserId
+    the user enters text to a text field                    css = #title  ${competitionTitle}
+    the user selects the radio button                       fundingType  LOAN
+    the user selects the option from the drop-down menu     Sector  id = competitionTypeId
+    the user selects the radio button                       fundingRule  SUBSIDY_CONTROL
+    the user selects the option from the drop-down menu     Infrastructure systems  id = innovationSectorCategoryId
+    the user selects the value from the drop-down menu      32   name = innovationAreaCategoryIds[0]
+    the user selects the option from the drop-down menu     Open  id = innovationSectorCategoryId
+    the user selects the value from the drop-down menu      19     name = innovationAreaCategoryIds[0]
+    the user selects the option from the drop-down menu     Emerging and enabling  id = innovationSectorCategoryId
+    the user selects the value from the drop-down menu      6  name = innovationAreaCategoryIds[0]
+    the user selects the value from the drop-down menu      15  name = innovationAreaCategoryIds[1]
+    the user enters text to a text field                    id = openingDateDay    10
+    the user enters text to a text field                    id = openingDateMonth    1
+    the user enters text to a text field                    id = openingDateYear     ${nextyear}
+    the user selects option from type ahead                 innovationLeadUserId  i  Ian Cooper
+    the user selects option from type ahead                 executiveUserId  j  John Doe
 
 The competition should show in the correct section
     [Arguments]    ${SECTION}    ${COMP_NAME}
@@ -990,31 +1013,31 @@ the user check for competition code
     the user sees the text in the text field    name = competitionCode     ${nextyearintwodigits}
 
 the comp admin creates competition with all sections details
-    [Arguments]  ${orgType}  ${competition}  ${extraKeyword}  ${compType}  ${fundingRule}  ${fundingType}  ${completionStage}  ${projectGrowth}  ${researchParticipation}  ${researchCategory}  ${collaborative}
+    [Arguments]  ${orgType}  ${competition}  ${extraKeyword}  ${compType}  ${fundingRule}  ${fundingType}  ${completionStage}  ${projectGrowth}  ${researchParticipation}  ${researchCategory}  ${collaborative}   ${isOpenComp}
     the user navigates to the page                          ${CA_UpcomingComp}
     the user clicks the button/link                         jQuery = .govuk-button:contains("Create competition")
     the user fills in the CS Initial details                ${competition}  ${month}  ${nextyear}  ${compType}  ${fundingRule}  ${fundingType}
     Run Keyword If  '${fundingType}' == 'PROCUREMENT'  the user selects procurement Terms and Conditions
-    ...  ELSE  the user selects the Terms and Conditions
+    ...  ELSE  the user selects the Terms and Conditions    ${compType}  ${fundingRule}
     the user fills in the CS Funding Information
-    the user fills in the CS Project eligibility            ${compType}  ${orgType}  ${researchParticipation}  ${researchCategory}  ${collaborative}  # 1 means 30%
-    the user fills in the CS funding eligibility            ${researchCategory}   ${compType}
-    the user selects the organisational eligibility to no   false
-    the user fills in the CS Milestones                     ${completionStage}   ${month}   ${nextyear}
+    the user fills in the CS Project eligibility                                     ${orgType}  ${researchParticipation}  ${researchCategory}  ${collaborative}  # 1 means 30%
+    the user fills in the CS funding eligibility                                     ${researchCategory}   ${compType}   ${fundingRule}
+    the user selects the organisational eligibility to no                            false
+    the user fills in the CS Milestones                                              ${completionStage}   ${month}   ${nextyear}   ${isOpenComp}
     Run Keyword If  '${fundingType}' == 'PROCUREMENT'  the user marks the procurement application as done      ${projectGrowth}  ${compType}
     ...  ELSE IF  '${fundingType}' == 'KTP'  the user marks the KTP application details as done     ${compType}
-    ...  ELSE  the user marks the application as done       ${projectGrowth}  ${compType}  ${competition}
-    the user fills in the CS Assessors                      ${fundingType}
+    ...  ELSE  the user marks the application as done                                ${projectGrowth}  ${compType}  ${competition}
+    the user fills in the CS Assessors                                               ${fundingType}
     Run Keyword If  '${fundingType}' == 'PROCUREMENT'  the user select no documents
     ...  ELSE  the user fills in the CS Documents in other projects
-    the user clicks the button/link                         link = Public content
-    the user fills in the Public content and publishes      ${extraKeyword}
-    the user clicks the button/link                         link = Return to setup overview
-    the user clicks the button/link                         link = Innovation leads
-    the user clicks the button/link                         jQuery = td:contains("Peter Freeman") button:contains("Add")
-    the user clicks the button/link                         link = Competition details
-    the user clicks the button/link                         link = Stakeholders
+    the user clicks the button/link                                                  link = Public content
+    the user fills in the Public content and publishes                               ${extraKeyword}
+    the user clicks the button/link                                                  link = Return to setup overview
+    the user clicks the button/link                                                  link = Innovation leads
+    the user clicks the button/link                                                  jQuery = td:contains("Peter Freeman") button:contains("Add")
+    the user clicks the button/link                                                  link = Competition details
+    the user clicks the button/link                                                  link = Stakeholders
     the user select stakeholder and add to competition
-    the user clicks the button/link                         link = Competition setup
-    the user clicks the button/link                         link = Documents
-    the user clicks the button/link                         id = doneButton
+    the user clicks the button/link                                                  link = Competition setup
+    the user clicks the button/link                                                  link = Documents
+    the user clicks the button/link                                                  id = doneButton

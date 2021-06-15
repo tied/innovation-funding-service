@@ -22,6 +22,8 @@ import org.springframework.mock.web.MockMultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 
+import java.util.Optional;
+
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -32,8 +34,7 @@ import static org.innovateuk.ifs.form.builder.FormInputResourceBuilder.newFormIn
 import static org.innovateuk.ifs.form.resource.FormInputScope.APPLICATION;
 import static org.innovateuk.ifs.form.resource.FormInputType.*;
 import static org.innovateuk.ifs.user.builder.ProcessRoleResourceBuilder.newProcessRoleResource;
-import static org.innovateuk.ifs.user.resource.Role.COLLABORATOR;
-import static org.innovateuk.ifs.user.resource.Role.LEADAPPLICANT;
+import static org.innovateuk.ifs.user.resource.ProcessRoleType.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -82,13 +83,13 @@ public class GenericQuestionApplicationControllerTest extends BaseControllerMock
         GenericQuestionApplicationViewModel viewModel = mock(GenericQuestionApplicationViewModel.class);
         ApplicantQuestionResource applicantQuestion = mock(ApplicantQuestionResource.class);
         when(applicantRestService.getQuestion(loggedInUser.getId(), applicationId, questionId)).thenReturn(applicantQuestion);
-        when(modelPopulator.populate(applicantQuestion)).thenReturn(viewModel);
+        when(modelPopulator.populate(applicantQuestion, Optional.empty())).thenReturn(viewModel);
 
         mockMvc.perform(get("/application/{applicationId}/form/question/{questionId}/generic", applicationId, questionId))
                 .andExpect(view().name("application/questions/generic"))
                 .andExpect(model().attribute("model", viewModel));
 
-        verify(formPopulator).populate(any(), eq(applicantQuestion));
+        verify(formPopulator).populate(any(), eq(Optional.empty()), eq(applicantQuestion));
     }
 
     @Test
@@ -106,14 +107,14 @@ public class GenericQuestionApplicationControllerTest extends BaseControllerMock
         GenericQuestionApplicationViewModel viewModel = mock(GenericQuestionApplicationViewModel.class);
         ApplicantQuestionResource applicantQuestion = mock(ApplicantQuestionResource.class);
         when(applicantRestService.getQuestion(loggedInUser.getId(), applicationId, questionId)).thenReturn(applicantQuestion);
-        when(modelPopulator.populate(applicantQuestion)).thenReturn(viewModel);
+        when(modelPopulator.populate(applicantQuestion, Optional.empty())).thenReturn(viewModel);
 
         mockMvc.perform(get("/application/{applicationId}/form/question/{questionId}/generic?show-errors=true", applicationId, questionId))
                 .andExpect(view().name("application/questions/generic"))
                 .andExpect(model().attribute("model", viewModel))
                 .andExpect(model().attributeHasFieldErrorCode("form", "templateDocument", "validation.file.required"));
 
-        verify(formPopulator).populate(any(), eq(applicantQuestion));
+        verify(formPopulator).populate(any(), eq(Optional.empty()), eq(applicantQuestion));
         verify(validator).validate(any(), any());
 
     }
@@ -226,7 +227,7 @@ public class GenericQuestionApplicationControllerTest extends BaseControllerMock
         GenericQuestionApplicationViewModel viewModel = mock(GenericQuestionApplicationViewModel.class);
         ApplicantQuestionResource applicantQuestion = mock(ApplicantQuestionResource.class);
         when(applicantRestService.getQuestion(loggedInUser.getId(), applicationId, questionId)).thenReturn(applicantQuestion);
-        when(modelPopulator.populate(applicantQuestion)).thenReturn(viewModel);
+        when(modelPopulator.populate(applicantQuestion, Optional.empty())).thenReturn(viewModel);
 
         ProcessRoleResource userProcessRole = newProcessRoleResource()
                 .withRole(COLLABORATOR)
@@ -267,7 +268,7 @@ public class GenericQuestionApplicationControllerTest extends BaseControllerMock
         GenericQuestionApplicationViewModel viewModel = mock(GenericQuestionApplicationViewModel.class);
         ApplicantQuestionResource applicantQuestion = mock(ApplicantQuestionResource.class);
         when(applicantRestService.getQuestion(loggedInUser.getId(), applicationId, questionId)).thenReturn(applicantQuestion);
-        when(modelPopulator.populate(applicantQuestion)).thenReturn(viewModel);
+        when(modelPopulator.populate(applicantQuestion, Optional.empty())).thenReturn(viewModel);
 
         ProcessRoleResource userProcessRole = newProcessRoleResource()
                 .withRole(COLLABORATOR)
@@ -303,7 +304,7 @@ public class GenericQuestionApplicationControllerTest extends BaseControllerMock
         GenericQuestionApplicationViewModel viewModel = mock(GenericQuestionApplicationViewModel.class);
         ApplicantQuestionResource applicantQuestion = mock(ApplicantQuestionResource.class);
         when(applicantRestService.getQuestion(loggedInUser.getId(), applicationId, questionId)).thenReturn(applicantQuestion);
-        when(modelPopulator.populate(applicantQuestion)).thenReturn(viewModel);
+        when(modelPopulator.populate(applicantQuestion, Optional.empty())).thenReturn(viewModel);
 
         ProcessRoleResource userProcessRole = newProcessRoleResource()
                 .withRole(COLLABORATOR)
@@ -344,7 +345,7 @@ public class GenericQuestionApplicationControllerTest extends BaseControllerMock
         GenericQuestionApplicationViewModel viewModel = mock(GenericQuestionApplicationViewModel.class);
         ApplicantQuestionResource applicantQuestion = mock(ApplicantQuestionResource.class);
         when(applicantRestService.getQuestion(loggedInUser.getId(), applicationId, questionId)).thenReturn(applicantQuestion);
-        when(modelPopulator.populate(applicantQuestion)).thenReturn(viewModel);
+        when(modelPopulator.populate(applicantQuestion, Optional.empty())).thenReturn(viewModel);
 
         ProcessRoleResource userProcessRole = newProcessRoleResource()
                 .withRole(COLLABORATOR)

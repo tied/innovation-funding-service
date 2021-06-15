@@ -29,6 +29,10 @@ The user clicks the button/link in the paginated list
     [Arguments]    ${BUTTON}
     Do Keyword With Pagination     click element     ${BUTTON}
 
+The user clicks the button/link in the paginated list with selector
+    [Arguments]    ${pagination_selector}   ${BUTTON}
+    Do Keyword With Pagination Selector     ${pagination_selector}   click element     ${BUTTON}
+
 the user clicks the button twice
     [Arguments]    ${element}
     the user clicks the button/link  ${element}
@@ -88,7 +92,6 @@ the user assigns the question to the collaborator
 The element should be disabled
     [Arguments]    ${ELEMENT}
     Element Should Be Disabled    ${ELEMENT}
-
 
 the address fields should be filled
     # postcode lookup implemented on some machines but not others, so check which is running:
@@ -183,3 +186,15 @@ reload and check if element appears
     [Arguments]  ${selector}
     the user reloads the page
     Wait Until Page Contains Element Without Screenshots    ${selector}     1s
+
+the user selects option from type ahead
+    [Arguments]   ${inputId}  ${searchTerm}  ${optionSelector}
+    input text                          id = ${inputId}  ${searchTerm}
+    the user clicks the button/link     jQuery = ul li:contains("${optionSelector}")
+    mouse out                           ${inputId}
+
+the user sees element in type ahead
+    [Arguments]   ${inputId}  ${searchTerm}  ${optionSelector}
+    input text                          id = ${inputId}  ${searchTerm}
+    the user should see the element     jQuery = ul li:contains("${optionSelector}")
+    mouse out                           ${inputId}

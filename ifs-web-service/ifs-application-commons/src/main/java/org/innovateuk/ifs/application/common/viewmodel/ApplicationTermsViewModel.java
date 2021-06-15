@@ -11,8 +11,10 @@ import java.util.Optional;
 public class ApplicationTermsViewModel implements BaseAnalyticsViewModel {
     private final long competitionId;
     private final long questionId;
+    private final String questionName;
     private final String competitionName;
     private final long applicationId;
+    private final String applicationName;
     private final String competitionTermsTemplate;
     private final boolean collaborativeApplication;
     private final Boolean termsAccepted;
@@ -21,12 +23,15 @@ public class ApplicationTermsViewModel implements BaseAnalyticsViewModel {
     private final boolean termsAcceptedByAllOrganisations;
     private final boolean showHeaderAndFooter;
     private final boolean additionalTerms;
-    private final boolean heukarCompetition;
+    private final boolean subsidyBasisRequiredButIncomplete;
+    private final String subsidyBasisQuestionUrl;
 
     public ApplicationTermsViewModel(long applicationId,
+                                     String applicationName,
                                      String competitionName,
                                      long competitionId,
                                      long questionId,
+                                     String questionName,
                                      String competitionTermsTemplate,
                                      boolean collaborativeApplication,
                                      boolean termsAccepted,
@@ -34,11 +39,14 @@ public class ApplicationTermsViewModel implements BaseAnalyticsViewModel {
                                      ZonedDateTime termsAcceptedOn,
                                      boolean termsAcceptedByAllOrganisations,
                                      boolean additionalTerms,
-                                     boolean heukarCompetition) {
+                                     boolean subsidyBasisRequiredButIncomplete,
+                                     String subsidyBasisQuestionUrl) {
         this.applicationId = applicationId;
+        this.applicationName = applicationName;
         this.competitionName = competitionName;
         this.competitionId = competitionId;
         this.questionId = questionId;
+        this.questionName = questionName;
         this.competitionTermsTemplate = competitionTermsTemplate;
         this.collaborativeApplication = collaborativeApplication;
         this.termsAccepted = termsAccepted;
@@ -47,7 +55,8 @@ public class ApplicationTermsViewModel implements BaseAnalyticsViewModel {
         this.termsAcceptedByAllOrganisations = termsAcceptedByAllOrganisations;
         this.additionalTerms = additionalTerms;
         this.showHeaderAndFooter = true;
-        this.heukarCompetition = heukarCompetition;
+        this.subsidyBasisRequiredButIncomplete = subsidyBasisRequiredButIncomplete;
+        this.subsidyBasisQuestionUrl = subsidyBasisQuestionUrl;
     }
 
     public ApplicationTermsViewModel(long applicationId,
@@ -57,26 +66,36 @@ public class ApplicationTermsViewModel implements BaseAnalyticsViewModel {
                                      String competitionTermsTemplate,
                                      boolean collaborativeApplication,
                                      boolean termsAcceptedByAllOrganisation,
-                                     boolean additionalTerms,
-                                     boolean heukarCompetition) {
+                                     boolean additionalTerms) {
         this.applicationId = applicationId;
+        this.applicationName = null;
         this.competitionName = competitionName;
         this.competitionId = competitionId;
         this.questionId = questionId;
+        this.questionName = null;
         this.competitionTermsTemplate = competitionTermsTemplate;
         this.collaborativeApplication = collaborativeApplication;
         this.additionalTerms = additionalTerms;
-        this.heukarCompetition = heukarCompetition;
         this.termsAccepted = null;
         this.termsAcceptedByName = null;
         this.termsAcceptedOn = null;
         this.termsAcceptedByAllOrganisations = termsAcceptedByAllOrganisation;
         this.showHeaderAndFooter = false;
+        this.subsidyBasisRequiredButIncomplete = false;
+        this.subsidyBasisQuestionUrl = null;
     }
 
     @Override
     public Long getApplicationId() {
         return applicationId;
+    }
+
+    public String getQuestionName() {
+        return questionName;
+    }
+
+    public String getApplicationName() {
+        return applicationName;
     }
 
     @Override
@@ -128,7 +147,11 @@ public class ApplicationTermsViewModel implements BaseAnalyticsViewModel {
         return additionalTerms;
     }
 
-    public boolean isHeukar() {
-        return heukarCompetition;
+    public boolean isSubsidyBasisRequiredButIncomplete() {
+        return subsidyBasisRequiredButIncomplete;
+    }
+
+    public String getSubsidyBasisQuestionUrl() {
+        return subsidyBasisQuestionUrl;
     }
 }

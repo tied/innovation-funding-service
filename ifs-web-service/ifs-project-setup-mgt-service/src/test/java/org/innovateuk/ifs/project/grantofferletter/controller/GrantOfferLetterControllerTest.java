@@ -24,6 +24,7 @@ import org.innovateuk.ifs.project.grantofferletter.template.resource.GolTemplate
 import org.innovateuk.ifs.project.grantofferletter.viewmodel.*;
 import org.innovateuk.ifs.project.resource.ApprovalType;
 import org.innovateuk.ifs.project.resource.ProjectResource;
+import org.innovateuk.ifs.util.MultipartFileAssertionUtil;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.springframework.core.io.ByteArrayResource;
@@ -32,6 +33,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MvcResult;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -124,6 +126,7 @@ public class GrantOfferLetterControllerTest extends BaseControllerMockMVCTest<Gr
         assertFalse(golViewModel.getAdditionalContractFileContentAvailable());
         assertFalse(golViewModel.getGrantOfferLetterFileContentAvailable());
         assertFalse(golViewModel.getSignedGrantOfferLetterRejected());
+        assertFalse(golViewModel.isProcurement());
         assertTrue(golViewModel.isProjectIsActive());
 
         GrantOfferLetterLetterForm form = (GrantOfferLetterLetterForm) result.getModelAndView().getModel().get("form");
@@ -278,7 +281,7 @@ public class GrantOfferLetterControllerTest extends BaseControllerMockMVCTest<Gr
     @Test
     public void uploadGrantOfferLetterFile() throws Exception {
 
-        Long projectId = 123L;
+        long projectId = 123L;
 
         FileEntryResource createdFileDetails = newFileEntryResource().withName("1").withMediaType("application/pdf").withFilesizeBytes(11).build();
 
@@ -357,6 +360,20 @@ public class GrantOfferLetterControllerTest extends BaseControllerMockMVCTest<Gr
                 andExpect(view().name("redirect:/project/" + projectId + "/grant-offer-letter/send"));
 
         verify(grantOfferLetterService).removeGrantOfferLetter(projectId);
+    }
+
+    @Test
+    public void resetGrantOfferLetter() throws Exception {
+        Long projectId = 123L;
+
+        when(grantOfferLetterService.resetGrantOfferLetter(projectId)).thenReturn(serviceSuccess());
+
+        mockMvc.perform(post("/project/" + projectId + "/grant-offer-letter/reset"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl(String.format("/project/%d/grant-offer-letter/send", projectId)))
+                .andReturn();
+
+        verify(grantOfferLetterService).resetGrantOfferLetter(projectId);
     }
 
     @Test
@@ -460,7 +477,7 @@ public class GrantOfferLetterControllerTest extends BaseControllerMockMVCTest<Gr
                 andReturn();
 
         GrantOfferLetterLetterForm form = (GrantOfferLetterLetterForm) result.getModelAndView().getModel().get("form");
-        assertEquals(uploadedFile, form.getAnnex());
+        MultipartFileAssertionUtil.assertMultipartFile(uploadedFile, form.getAnnex());
     }
 
     @Test
@@ -504,7 +521,7 @@ public class GrantOfferLetterControllerTest extends BaseControllerMockMVCTest<Gr
                 andReturn();
 
         GrantOfferLetterLetterForm form = (GrantOfferLetterLetterForm) result.getModelAndView().getModel().get("form");
-        assertEquals(uploadedFile, form.getAnnex());
+        MultipartFileAssertionUtil.assertMultipartFile(uploadedFile, form.getAnnex());
         assertEquals(Boolean.FALSE, ((GrantOfferLetterModel)result.getModelAndView().getModel().get("model")).getAdditionalContractFileContentAvailable());
     }
 
@@ -695,7 +712,7 @@ public class GrantOfferLetterControllerTest extends BaseControllerMockMVCTest<Gr
                                                                   "projectName",
                                                                   "leadOrgName",
                                                                   newNoteResource().build(1),
-                                                                  "templateName",
+                                                                  Collections.singletonMap("state aid", "templateName"),
                                                                   industrialTable,
                                                                   academicTable,
                                                                   summaryTable,
@@ -728,7 +745,7 @@ public class GrantOfferLetterControllerTest extends BaseControllerMockMVCTest<Gr
 
         KtpGrantOfferLetterTemplateViewModel viewModel = mock(KtpGrantOfferLetterTemplateViewModel.class);
 
-        when(ktpGrantOfferLetterTemplatePopulator.populate(projectResource, competition)).thenReturn(viewModel);
+        when(ktpGrantOfferLetterTemplatePopulator.populate(projectResource)).thenReturn(viewModel);
 
         mockMvc.perform(get("/project/" + projectId + "/grant-offer-letter/template"))
                 .andExpect(status().isOk())

@@ -1,7 +1,6 @@
 package org.innovateuk.ifs.management.competition.setup.fundinglevelpercentage.viewmodel;
 
 import org.innovateuk.ifs.category.resource.ResearchCategoryResource;
-import org.innovateuk.ifs.commons.exception.ObjectNotFoundException;
 import org.innovateuk.ifs.competition.resource.FundingRules;
 import org.innovateuk.ifs.finance.resource.OrganisationSize;
 import org.innovateuk.ifs.management.competition.setup.core.viewmodel.CompetitionSetupViewModel;
@@ -13,13 +12,16 @@ public class FundingLevelPercentageViewModel extends CompetitionSetupViewModel {
 
     private final List<ResearchCategoryResource> categories;
     private final List<OrganisationSize> sizes;
+    private final boolean dualFunding;
 
     public FundingLevelPercentageViewModel(
             GeneralSetupViewModel generalSetupViewModel,
-            List<ResearchCategoryResource> categories, List<OrganisationSize> sizes) {
+            List<ResearchCategoryResource> categories, List<OrganisationSize> sizes,
+            boolean dualFunding) {
         this.generalSetupViewModel = generalSetupViewModel;
         this.categories = categories;
         this.sizes = sizes;
+        this.dualFunding = dualFunding;
     }
 
     public List<ResearchCategoryResource> getCategories() {
@@ -30,17 +32,8 @@ public class FundingLevelPercentageViewModel extends CompetitionSetupViewModel {
         return sizes;
     }
 
-    public String descriptionForSize(OrganisationSize size) {
-        switch (size) {
-            case SMALL:
-                return "Micro entity or small company";
-            case MEDIUM:
-                return "Medium-sized company";
-            case LARGE:
-                return "Large-sized company";
-            default:
-                throw new ObjectNotFoundException("Unknown size " + size);
-        }
+    public boolean isDualFunding() {
+        return dualFunding;
     }
 
     public boolean isShowResetButton() {
@@ -50,6 +43,8 @@ public class FundingLevelPercentageViewModel extends CompetitionSetupViewModel {
     }
 
     public boolean isShowFundingRules() {
-        return generalSetupViewModel.getCompetition().getFundingRules() != FundingRules.NOT_AID;
+        return generalSetupViewModel.getCompetition().getFundingRules() != FundingRules.NOT_AID
+                 && !dualFunding;
     }
+
 }

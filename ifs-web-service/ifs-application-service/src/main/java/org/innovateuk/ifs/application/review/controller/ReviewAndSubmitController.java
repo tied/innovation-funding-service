@@ -7,6 +7,7 @@ import org.innovateuk.ifs.application.review.populator.ReviewAndSubmitViewModelP
 import org.innovateuk.ifs.application.review.viewmodel.TrackViewModel;
 import org.innovateuk.ifs.application.service.ApplicationRestService;
 import org.innovateuk.ifs.application.service.QuestionStatusRestService;
+import org.innovateuk.ifs.assessment.service.AssessmentRestService;
 import org.innovateuk.ifs.async.annotations.AsyncMethod;
 import org.innovateuk.ifs.commons.error.ValidationMessages;
 import org.innovateuk.ifs.commons.rest.RestResult;
@@ -28,7 +29,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -82,19 +82,17 @@ public class ReviewAndSubmitController {
     public String submitApplication(@PathVariable long applicationId,
                                     @ModelAttribute(FORM_ATTR_NAME) ApplicationSubmitForm form,
                                     BindingResult bindingResult,
-                                    RedirectAttributes redirectAttributes,
                                     UserResource user,
                                     HttpServletResponse response) {
 
-            ApplicationResource application = applicationRestService.getApplicationById(applicationId).getSuccess();
+        ApplicationResource application = applicationRestService.getApplicationById(applicationId).getSuccess();
 
-            if (!ableToSubmitApplication(user, application)) {
-                cookieFlashMessageFilter.setFlashMessage(response, "cannotSubmit");
-                return  format("redirect:/application/%d", applicationId);
-            }
+        if (!ableToSubmitApplication(user, application)) {
+            cookieFlashMessageFilter.setFlashMessage(response, "cannotSubmit");
+            return  format("redirect:/application/%d", applicationId);
+        }
 
-        redirectAttributes.addFlashAttribute("termsAgreed", true);
-        return format("redirect:/application/%d/confirm-submit", applicationId);
+        return format("redirect:/application/%d/confirm-submit?termsAgreed=true", applicationId);
     }
 
     @SecuredBySpring(value = "APPLICATION_REVIEW_AND_SUBMIT_RETURN_AND_EDIT",
@@ -167,6 +165,7 @@ public class ReviewAndSubmitController {
         if (!TRUE.equals(termsAgreed)) {
             return format("redirect:/application/%d/summary", applicationId);
         }
+        model.addAttribute("termsAgreed", termsAgreed);
         model.addAttribute("applicationId", applicationId);
         return "application-confirm-submit";
     }
@@ -206,8 +205,9 @@ public class ReviewAndSubmitController {
                                            UserResource userResource) {
 
         ApplicationResource applicationResource = applicationRestService.getApplicationById(applicationId).getSuccess();
+        CompetitionResource competitionResource = competitionRestService.getCompetitionById(applicationResource.getCompetition()).getSuccess();
 
-        if (!canReopenApplication(applicationResource, userResource)) {
+        if (!canReopenApplication(applicationResource, userResource, competitionResource.isAlwaysOpen())) {
             return "redirect:/application/" + applicationId + "/track";
         }
 
@@ -218,8 +218,8 @@ public class ReviewAndSubmitController {
         return "application-confirm-reopen";
     }
 
-    private boolean canReopenApplication(ApplicationResource application, UserResource user) {
-        return CompetitionStatus.OPEN.equals(application.getCompetitionStatus())
+    private boolean canReopenApplication(ApplicationResource application, UserResource user, boolean alwaysOpen) {
+        return !alwaysOpen && CompetitionStatus.OPEN.equals(application.getCompetitionStatus())
                 && application.canBeReopened()
                 && userService.isLeadApplicant(user.getId(), application);
     }
@@ -261,7 +261,7 @@ public class ReviewAndSubmitController {
                 application,
                 earlyMetricsUrl,
                 application.getCompletion(),
-                canReopenApplication(application, user)
+                canReopenApplication(application, user, competition.isAlwaysOpen())
         ));
         return getTrackingPage(competition);
     }
@@ -269,12 +269,12 @@ public class ReviewAndSubmitController {
     private String getTrackingPage(CompetitionResource competition) {
         if (CovidType.ADDITIONAL_FUNDING.equals(competition.getCovidType())) {
             return "covid-additional-funding-application-track";
+        } else if (competition.isAlwaysOpen()) {
+            return "always-open-track";
         } else if (competition.isH2020()) {
             return "h2020-grant-transfer-track";
         } else if (competition.isLoan()) {
             return "loan-application-track";
-        } else if (competition.isHeukar()) {
-            return "heukar-application-track";
         } else {
             return "application-track";
         }

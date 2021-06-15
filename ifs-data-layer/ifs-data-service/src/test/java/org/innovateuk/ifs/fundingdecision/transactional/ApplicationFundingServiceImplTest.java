@@ -24,8 +24,8 @@ import org.innovateuk.ifs.fundingdecision.domain.FundingDecisionStatus;
 import org.innovateuk.ifs.fundingdecision.mapper.FundingDecisionMapper;
 import org.innovateuk.ifs.notifications.resource.*;
 import org.innovateuk.ifs.notifications.service.NotificationService;
+import org.innovateuk.ifs.project.core.ProjectParticipantRole;
 import org.innovateuk.ifs.project.core.domain.Project;
-import org.innovateuk.ifs.project.core.domain.ProjectParticipantRole;
 import org.innovateuk.ifs.project.core.domain.ProjectUser;
 import org.innovateuk.ifs.project.core.workflow.configuration.ProjectWorkflowHandler;
 import org.innovateuk.ifs.project.monitoring.domain.MonitoringOfficer;
@@ -33,7 +33,7 @@ import org.innovateuk.ifs.user.domain.ProcessRole;
 import org.innovateuk.ifs.user.domain.User;
 import org.innovateuk.ifs.user.repository.ProcessRoleRepository;
 import org.innovateuk.ifs.user.repository.UserRepository;
-import org.innovateuk.ifs.user.resource.Role;
+import org.innovateuk.ifs.user.resource.ProcessRoleType;
 import org.innovateuk.ifs.user.resource.UserResource;
 import org.innovateuk.ifs.user.resource.UserStatus;
 import org.innovateuk.ifs.util.MapFunctions;
@@ -53,7 +53,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.google.common.collect.Lists.newArrayList;
-import static java.util.Arrays.asList;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
 import static org.innovateuk.ifs.LambdaMatcher.createLambdaMatcher;
@@ -61,6 +60,7 @@ import static org.innovateuk.ifs.application.builder.ApplicationBuilder.newAppli
 import static org.innovateuk.ifs.application.resource.FundingDecision.*;
 import static org.innovateuk.ifs.commons.error.CommonFailureKeys.FUNDING_DECISION_KTP_PROJECT_NOT_YET_CREATED;
 import static org.innovateuk.ifs.commons.service.ServiceResult.serviceSuccess;
+import static org.innovateuk.ifs.competition.builder.AssessmentPeriodBuilder.newAssessmentPeriod;
 import static org.innovateuk.ifs.competition.builder.CompetitionAssessmentConfigBuilder.newCompetitionAssessmentConfig;
 import static org.innovateuk.ifs.competition.builder.CompetitionBuilder.newCompetition;
 import static org.innovateuk.ifs.competition.builder.CompetitionTypeBuilder.newCompetitionType;
@@ -133,7 +133,7 @@ public class ApplicationFundingServiceImplTest extends BaseServiceUnitTest<Appli
 
     @Before
     public void setup() {
-    	competition = newCompetition().withAssessorFeedbackDate("01/02/2017 17:30:00").withCompetitionStatus(CompetitionStatus.FUNDERS_PANEL).withCompetitionAssessmentConfig(newCompetitionAssessmentConfig().withIncludeAverageAssessorScoreInNotifications(true).build()).withId(123L).build();
+    	competition = newCompetition().withAssessmentPeriods(newAssessmentPeriod().build(1)).withAssessorFeedbackDate("01/02/2017 17:30:00").withCompetitionStatus(CompetitionStatus.FUNDERS_PANEL).withCompetitionAssessmentConfig(newCompetitionAssessmentConfig().withIncludeAverageAssessorScoreInNotifications(true).build()).withId(123L).build();
     	when(competitionRepository.findById(123L)).thenReturn(Optional.of(competition));
     	
     	when(fundingDecisionMapper.mapToDomain(any(FundingDecision.class))).thenAnswer(new Answer<FundingDecisionStatus>(){
@@ -160,6 +160,7 @@ public class ApplicationFundingServiceImplTest extends BaseServiceUnitTest<Appli
         Application application1 = newApplication().withActivityState(ApplicationState.SUBMITTED).withCompetition(competition).build();
         Application application2 = newApplication().withActivityState(ApplicationState.SUBMITTED).withCompetition(competition).build();
         Application application3 = newApplication().withActivityState(ApplicationState.SUBMITTED).withCompetition(competition).build();
+        Application application4 = newApplication().withActivityState(ApplicationState.SUBMITTED).withCompetition(competition).build();
 
         User application1LeadApplicant = newUser().build();
         User application2LeadApplicant = newUser().build();
@@ -168,29 +169,41 @@ public class ApplicationFundingServiceImplTest extends BaseServiceUnitTest<Appli
 
         List<ProcessRole> leadApplicantProcessRoles = newProcessRole().
                 withUser(application1LeadApplicant, application2LeadApplicant, application3LeadApplicant, inactiveapplicant).
-                withApplication(application1, application2, application3, application3).
-                withRole(Role.LEADAPPLICANT, Role.LEADAPPLICANT, Role.LEADAPPLICANT, Role.COLLABORATOR).
+                withApplication(application1, application2, application3, application4).
+                withRole(ProcessRoleType.LEADAPPLICANT, ProcessRoleType.LEADAPPLICANT, ProcessRoleType.LEADAPPLICANT, ProcessRoleType.LEADAPPLICANT).
                 build(4);
 
         UserNotificationTarget application1LeadApplicantTarget = new UserNotificationTarget(application1LeadApplicant.getName(), application1LeadApplicant.getEmail());
         NotificationMessage application1LeadApplicantMessage = new NotificationMessage(application1LeadApplicantTarget, asMap(
                 "applicationName", application1.getName(),
+                "applicationId", application1.getId(),
                 "competitionName", application1.getCompetition().getName(),
-                "applicationId", application1.getId()));
+                "competitionId", application1.getCompetition().getId(),
+                "alwaysOpen", application1.getCompetition().isAlwaysOpen(),
+                "webBaseUrl", webBaseUrl
+            ));
 
         UserNotificationTarget application2LeadApplicantTarget = new UserNotificationTarget(application2LeadApplicant.getName(), application2LeadApplicant.getEmail());
         NotificationMessage application2LeadApplicantMessage = new NotificationMessage(application2LeadApplicantTarget, asMap(
                 "applicationName", application2.getName(),
+                "applicationId", application2.getId(),
                 "competitionName", application2.getCompetition().getName(),
-                "applicationId", application2.getId()));
+                "competitionId", application2.getCompetition().getId(),
+                "alwaysOpen", application2.getCompetition().isAlwaysOpen(),
+                "webBaseUrl", webBaseUrl
+        ));
 
         UserNotificationTarget application3LeadApplicantTarget = new UserNotificationTarget(application3LeadApplicant.getName(), application3LeadApplicant.getEmail());
         NotificationMessage application3LeadApplicantMessage = new NotificationMessage(application3LeadApplicantTarget, asMap(
                 "applicationName", application3.getName(),
+                "applicationId", application3.getId(),
                 "competitionName", application3.getCompetition().getName(),
-                "applicationId", application3.getId()));
+                "competitionId", application3.getCompetition().getId(),
+                "alwaysOpen", application3.getCompetition().isAlwaysOpen(),
+                "webBaseUrl", webBaseUrl
+        ));
 
-        List<NotificationMessage> expectedLeadApplicants = asList(application1LeadApplicantMessage, application2LeadApplicantMessage, application3LeadApplicantMessage);
+        List<NotificationMessage> expectedLeadApplicants = newArrayList(application1LeadApplicantMessage, application2LeadApplicantMessage, application3LeadApplicantMessage);
 
         Map<Long, FundingDecision> decisions = MapFunctions.asMap(
                 application1.getId(), FundingDecision.FUNDED,
@@ -203,8 +216,8 @@ public class ApplicationFundingServiceImplTest extends BaseServiceUnitTest<Appli
 
         Notification expectedFundingNotification = new Notification(systemNotificationSource, expectedLeadApplicants, APPLICATION_FUNDING, expectedGlobalNotificationArguments);
 
-        List<Long> applicationIds = asList(application1.getId(), application2.getId(), application3.getId());
-        List<Application> applications = asList(application1, application2, application3);
+        List<Long> applicationIds = newArrayList(application1.getId(), application2.getId(), application3.getId());
+        List<Application> applications = newArrayList(application1, application2, application3);
         when(applicationRepository.findAllById(applicationIds)).thenReturn(applications);
 
         leadApplicantProcessRoles.forEach(processRole ->
@@ -247,7 +260,7 @@ public class ApplicationFundingServiceImplTest extends BaseServiceUnitTest<Appli
         List<ProcessRole> leadApplicantProcessRoles = newProcessRole().
                 withUser(application1LeadApplicant, application2LeadApplicant, application3LeadApplicant).
                 withApplication(application1, application2, application3).
-                withRole(Role.LEADAPPLICANT).
+                withRole(ProcessRoleType.LEADAPPLICANT).
                 build(3);
 
         AverageAssessorScore averageAssessorScore1 = new AverageAssessorScore(application1, BigDecimal.valueOf(90));
@@ -257,24 +270,41 @@ public class ApplicationFundingServiceImplTest extends BaseServiceUnitTest<Appli
         UserNotificationTarget application1LeadApplicantTarget = new UserNotificationTarget(application1LeadApplicant.getName(), application1LeadApplicant.getEmail());
         NotificationMessage application1LeadApplicantMessage = new NotificationMessage(application1LeadApplicantTarget,  asMap(
                 "applicationName", application1.getName(),
-                "competitionName", application1.getCompetition().getName(),
                 "applicationId", application1.getId(),
+                "competitionName", application1.getCompetition().getName(),
+                "competitionId", application1.getCompetition().getId(),
+                "alwaysOpen", application1.getCompetition().isAlwaysOpen(),
+                "webBaseUrl", webBaseUrl,
                 "averageAssessorScore", "Average assessor score: " + averageAssessorScore1.getScore() + "%"));
         UserNotificationTarget application2LeadApplicantTarget = new UserNotificationTarget(application2LeadApplicant.getName(), application2LeadApplicant.getEmail());
         NotificationMessage application2LeadApplicantMessage = new NotificationMessage(application2LeadApplicantTarget, asMap(
                 "applicationName", application2.getName(),
-                "competitionName", application2.getCompetition().getName(),
                 "applicationId", application2.getId(),
+                "competitionName", application2.getCompetition().getName(),
+                "competitionId", application2.getCompetition().getId(),
+                "alwaysOpen", application2.getCompetition().isAlwaysOpen(),
+                "webBaseUrl", webBaseUrl,
                 "averageAssessorScore", "Average assessor score: " + averageAssessorScore2.getScore() + "%"));
         UserNotificationTarget application3LeadApplicantTarget = new UserNotificationTarget(application3LeadApplicant.getName(), application3LeadApplicant.getEmail());
         NotificationMessage application3LeadApplicantMessage = new NotificationMessage(application3LeadApplicantTarget, asMap(
                 "applicationName", application3.getName(),
-                "competitionName", application3.getCompetition().getName(),
                 "applicationId", application3.getId(),
+                "competitionName", application3.getCompetition().getName(),
+                "competitionId", application3.getCompetition().getId(),
+                "alwaysOpen", application3.getCompetition().isAlwaysOpen(),
+                "webBaseUrl", webBaseUrl,
                 "averageAssessorScore", "Average assessor score: " + averageAssessorScore3.getScore() + "%"));
-        List<NotificationMessage> expectedLeadApplicants = asList(application1LeadApplicantMessage, application2LeadApplicantMessage, application3LeadApplicantMessage);
+        List<NotificationMessage> expectedLeadApplicants = newArrayList(application1LeadApplicantMessage, application2LeadApplicantMessage, application3LeadApplicantMessage);
 
+/*
 
+                    perNotificationTargetArguments.put("applicationName", application.getName());
+                    perNotificationTargetArguments.put("applicationId", applicationId);
+                    perNotificationTargetArguments.put("competitionName", application.getCompetition().getName());
+                    perNotificationTargetArguments.put("competitionId", application.getCompetition().getId());
+                    perNotificationTargetArguments.put("alwaysOpen", application.getCompetition().isAlwaysOpen());
+                    perNotificationTargetArguments.put("webBaseUrl", webBaseUrl);
+ */
         Map<Long, FundingDecision> decisions = MapFunctions.asMap(
                 application1.getId(), FundingDecision.FUNDED,
                 application2.getId(), FundingDecision.UNFUNDED,
@@ -286,8 +316,8 @@ public class ApplicationFundingServiceImplTest extends BaseServiceUnitTest<Appli
 
         Notification expectedFundingNotification = new Notification(systemNotificationSource, expectedLeadApplicants, APPLICATION_FUNDING, expectedGlobalNotificationArguments);
 
-        List<Long> applicationIds = asList(application1.getId(), application2.getId(), application3.getId());
-        List<Application> applications = asList(application1, application2, application3);
+        List<Long> applicationIds = newArrayList(application1.getId(), application2.getId(), application3.getId());
+        List<Application> applications = newArrayList(application1, application2, application3);
         when(applicationRepository.findAllById(applicationIds)).thenReturn(applications);
         when(applicationWorkflowHandler.notifyFromApplicationState(any(), any())).thenReturn(true);
 
@@ -325,23 +355,23 @@ public class ApplicationFundingServiceImplTest extends BaseServiceUnitTest<Appli
         // add some collaborators into the mix - they should receive Notifications, and applicants who should not
         User application1LeadApplicant = newUser().build();
         User application1Collaborator = newUser().build();
-        User application1Applicant = newUser().build();
+        User application1Assessor = newUser().build();
         User application2LeadApplicant = newUser().build();
         User application2Collaborator = newUser().build();
-        User application2Applicant = newUser().build();
+        User application2Assessor = newUser().build();
 
 
         List<ProcessRole> allProcessRoles = newProcessRole().
-                withUser(application1LeadApplicant, application1Collaborator, application1Applicant, application2LeadApplicant, application2Collaborator, application2Applicant).
+                withUser(application1LeadApplicant, application1Collaborator, application1Assessor, application2LeadApplicant, application2Collaborator, application2Assessor).
                 withApplication(application1, application1, application1, application2, application2, application2).
-                withRole(Role.LEADAPPLICANT, Role.COLLABORATOR, Role.APPLICANT, Role.LEADAPPLICANT, Role.COLLABORATOR, Role.APPLICANT).
+                withRole(ProcessRoleType.LEADAPPLICANT, ProcessRoleType.COLLABORATOR, ProcessRoleType.ASSESSOR, ProcessRoleType.LEADAPPLICANT, ProcessRoleType.COLLABORATOR, ProcessRoleType.ASSESSOR).
                 build(6);
 
         UserNotificationTarget application1LeadApplicantTarget = new UserNotificationTarget(application1LeadApplicant.getName(), application1LeadApplicant.getEmail());
         UserNotificationTarget application2LeadApplicantTarget = new UserNotificationTarget(application2LeadApplicant.getName(), application2LeadApplicant.getEmail());
         UserNotificationTarget application1CollaboratorTarget = new UserNotificationTarget(application1Collaborator.getName(), application1Collaborator.getEmail());
         UserNotificationTarget application2CollaboratorTarget = new UserNotificationTarget(application2Collaborator.getName(), application2Collaborator.getEmail());
-        List<NotificationTarget> expectedApplicants = asList(application1LeadApplicantTarget, application2LeadApplicantTarget, application1CollaboratorTarget, application2CollaboratorTarget);
+        List<NotificationTarget> expectedApplicants = newArrayList(application1LeadApplicantTarget, application2LeadApplicantTarget, application1CollaboratorTarget, application2CollaboratorTarget);
 
         Map<Long, FundingDecision> decisions = MapFunctions.asMap(
                 application1.getId(), FundingDecision.FUNDED,
@@ -351,11 +381,11 @@ public class ApplicationFundingServiceImplTest extends BaseServiceUnitTest<Appli
         Notification expectedFundingNotification =
                 new Notification(systemNotificationSource, expectedApplicants.stream().map(NotificationMessage::new).collect(Collectors.toList()), APPLICATION_FUNDING, emptyMap());
         
-        List<Long> applicationIds = asList(application1.getId(), application2.getId());
-        List<Application> applications = asList(application1, application2);
+        List<Long> applicationIds = newArrayList(application1.getId(), application2.getId());
+        List<Application> applications = newArrayList(application1, application2);
         when(applicationRepository.findAllById(applicationIds)).thenReturn(applications);
 
-        asList(application1, application2).forEach(application ->
+        newArrayList(application1, application2).forEach(application ->
                 when(applicationRepository.findById(application.getId())).thenReturn(Optional.of(application))
         );
 
@@ -430,7 +460,7 @@ public class ApplicationFundingServiceImplTest extends BaseServiceUnitTest<Appli
         UserNotificationTarget application2ParticipantTarget = new UserNotificationTarget(application2Participant.getName(), application2Participant.getEmail());
         UserNotificationTarget application2MoTarget = new UserNotificationTarget(application2Mo.getName(), application2Mo.getEmail());
 
-        List<NotificationTarget> expectedTargets = asList(application1ParticipantTarget, application1MoTarget, application2ParticipantTarget, application2MoTarget);
+        List<NotificationTarget> expectedTargets = newArrayList(application1ParticipantTarget, application1MoTarget, application2ParticipantTarget, application2MoTarget);
 
         Map<Long, FundingDecision> decisions = MapFunctions.asMap(
                 application1.getId(), FundingDecision.FUNDED,
@@ -440,11 +470,11 @@ public class ApplicationFundingServiceImplTest extends BaseServiceUnitTest<Appli
         Notification expectedFundingNotification =
                 new Notification(systemNotificationSource, expectedTargets.stream().map(NotificationMessage::new).collect(Collectors.toList()), APPLICATION_FUNDING, emptyMap());
 
-        List<Long> applicationIds = asList(application1.getId(), application2.getId());
-        List<Application> applications = asList(application1, application2);
+        List<Long> applicationIds = newArrayList(application1.getId(), application2.getId());
+        List<Application> applications = newArrayList(application1, application2);
         when(applicationRepository.findAllById(applicationIds)).thenReturn(applications);
 
-        asList(application1, application2).forEach(application ->
+        newArrayList(application1, application2).forEach(application ->
                 when(applicationRepository.findById(application.getId())).thenReturn(Optional.of(application))
         );
 
@@ -474,7 +504,7 @@ public class ApplicationFundingServiceImplTest extends BaseServiceUnitTest<Appli
     	
     	Application application1 = newApplication().withId(1L).withCompetition(competition).withFundingDecision(FundingDecisionStatus.FUNDED).withApplicationState(ApplicationState.OPENED).build();
      	Application application2 = newApplication().withId(2L).withCompetition(competition).withFundingDecision(FundingDecisionStatus.UNFUNDED).withApplicationState(ApplicationState.OPENED).build();
-    	when(applicationRepository.findAllowedApplicationsForCompetition(new HashSet<>(singletonList(1L)),  competition.getId())).thenReturn(asList(application1, application2));
+    	when(applicationRepository.findAllowedApplicationsForCompetition(new HashSet<>(singletonList(1L)),  competition.getId())).thenReturn(newArrayList(application1, application2));
 
     	Map<Long, FundingDecision> decision = asMap(1L, UNDECIDED);
     	
@@ -561,6 +591,7 @@ public class ApplicationFundingServiceImplTest extends BaseServiceUnitTest<Appli
                 .build();
 
         Competition projectSetupCompetition = newCompetition()
+                .withAssessmentPeriods(newArrayList(newAssessmentPeriod().build()))
                 .withCompetitionStatus(CompetitionStatus.PROJECT_SETUP)
                 .withCompetitionType(competitionType)
                 .withId(projectSetupCompetitionId)
@@ -598,7 +629,7 @@ public class ApplicationFundingServiceImplTest extends BaseServiceUnitTest<Appli
 
         Application application1 = newApplication().withId(1L).withCompetition(competition).withFundingDecision(FundingDecisionStatus.FUNDED).withApplicationState(ApplicationState.OPENED).build();
         Application application2 = newApplication().withId(2L).withCompetition(competition).withFundingDecision(FundingDecisionStatus.UNFUNDED).withApplicationState(ApplicationState.OPENED).build();
-        when(applicationRepository.findAllowedApplicationsForCompetition(new HashSet<>(singletonList(1L)),  competition.getId())).thenReturn(asList(application1, application2));
+        when(applicationRepository.findAllowedApplicationsForCompetition(new HashSet<>(singletonList(1L)),  competition.getId())).thenReturn(newArrayList(application1, application2));
 
         Map<Long, FundingDecision> decision = new HashMap<>();
 
@@ -643,7 +674,7 @@ public class ApplicationFundingServiceImplTest extends BaseServiceUnitTest<Appli
 
             Collection<String> actualTo = new TreeSet<>(Collator.getInstance());
             actualTo.addAll(simpleMap(notification.getTo(), t -> t.getTo().getEmailAddress()));
-            assertEquals(asList(expectedTo.toArray()), asList(actualTo.toArray()));
+            assertEquals(newArrayList(expectedTo.toArray()), newArrayList(actualTo.toArray()));
 
             assertEquals(expectedNotification.getMessageKey(), notification.getMessageKey());
         });

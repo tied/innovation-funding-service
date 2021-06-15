@@ -1,7 +1,9 @@
 package org.innovateuk.ifs.finance.domain;
 
+import org.hibernate.annotations.ColumnDefault;
 import org.innovateuk.ifs.category.domain.ResearchCategory;
 import org.innovateuk.ifs.competition.domain.Competition;
+import org.innovateuk.ifs.competition.resource.FundingRules;
 import org.innovateuk.ifs.finance.resource.OrganisationSize;
 
 import javax.persistence.*;
@@ -29,14 +31,23 @@ public class GrantClaimMaximum {
     @Column(name = "organisation_size_id")
     private OrganisationSize organisationSize;
 
+    @Enumerated(EnumType.STRING)
+    private FundingRules fundingRules;
+
+    @Column(columnDefinition = "tinyint(4)")
     private Integer maximum;
 
     public GrantClaimMaximum() {}
 
-    public GrantClaimMaximum(ResearchCategory researchCategory, OrganisationSize organisationSize, Integer maximum) {
+    public GrantClaimMaximum(ResearchCategory researchCategory, OrganisationSize organisationSize, FundingRules fundingRules, Integer maximum) {
         this.researchCategory = researchCategory;
         this.organisationSize = organisationSize;
         this.maximum = maximum;
+        this.fundingRules = fundingRules;
+    }
+
+    public GrantClaimMaximum(ResearchCategory researchCategory, OrganisationSize organisationSize, Integer maximum) {
+        this(researchCategory, organisationSize, null, maximum);
     }
 
     public Long getId() {
@@ -69,6 +80,19 @@ public class GrantClaimMaximum {
 
     public void setOrganisationSize(OrganisationSize organisationSize) {
         this.organisationSize = organisationSize;
+    }
+
+    public FundingRules getFundingRules() {
+        return fundingRules;
+    }
+
+    public void setFundingRules(FundingRules fundingRules) {
+        this.fundingRules = fundingRules;
+    }
+
+    public GrantClaimMaximum withFundingRules(FundingRules fundingRules) {
+        this.fundingRules = fundingRules;
+        return this;
     }
 
     public Integer getMaximum() {

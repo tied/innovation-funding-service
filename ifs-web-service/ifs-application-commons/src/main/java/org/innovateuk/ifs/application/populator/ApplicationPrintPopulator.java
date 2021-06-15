@@ -8,11 +8,11 @@ import org.innovateuk.ifs.application.service.ApplicationRestService;
 import org.innovateuk.ifs.competition.resource.CompetitionResource;
 import org.innovateuk.ifs.competition.service.CompetitionRestService;
 import org.innovateuk.ifs.interview.service.InterviewAssignmentRestService;
+import org.innovateuk.ifs.user.resource.Authority;
 import org.innovateuk.ifs.user.resource.ProcessRoleResource;
 import org.innovateuk.ifs.user.resource.Role;
 import org.innovateuk.ifs.user.resource.UserResource;
 import org.innovateuk.ifs.user.service.ProcessRoleRestService;
-import org.innovateuk.ifs.user.service.UserRestService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.ui.Model;
@@ -20,7 +20,6 @@ import org.springframework.ui.Model;
 import java.util.List;
 
 import static org.innovateuk.ifs.application.readonly.ApplicationReadOnlySettings.defaultSettings;
-import static org.innovateuk.ifs.user.resource.Role.KNOWLEDGE_TRANSFER_ADVISER;
 
 @Component
 public class ApplicationPrintPopulator {
@@ -55,7 +54,7 @@ public class ApplicationPrintPopulator {
     }
 
     private boolean userCanViewFeedback(UserResource user, CompetitionResource competition, ApplicationResource application) {
-        return (user.hasRole(Role.PROJECT_FINANCE) && competition.isProcurement())
+        return (user.hasAuthority(Authority.PROJECT_FINANCE) && competition.isProcurement())
                 || ktpUserCanViewFeedback(user, competition, application)
                 || nonKtpUserCanViewFeedback(user, competition, application);
     }
@@ -63,32 +62,32 @@ public class ApplicationPrintPopulator {
     private boolean nonKtpUserCanViewFeedback(UserResource user, CompetitionResource competition, ApplicationResource application) {
         return user.hasAnyRoles(Role.APPLICANT, Role.ASSESSOR, Role.MONITORING_OFFICER, Role.STAKEHOLDER)
                 && !competition.isKtp()
-                && shouldDisplayFeedback(competition, application);
+                && shouldDisplayFeedback(application);
     }
 
     private boolean ktpUserCanViewFeedback(UserResource user, CompetitionResource competition, ApplicationResource application) {
         List<ProcessRoleResource> processRoles = processRoleRestService.findProcessRole(application.getId()).getSuccess();
         boolean isKta = processRoles.stream()
-                .anyMatch(pr -> pr.getUser().equals(user.getId()) && pr.getRole() == KNOWLEDGE_TRANSFER_ADVISER);
+                .anyMatch(pr -> pr.getUser().equals(user.getId()) && pr.getRole().isKta());
 
         return isKta
                 && competition.isKtp()
-                && shouldDisplayFeedback(competition, application);
+                && shouldDisplayFeedback(application);
     }
 
     private boolean userCanViewSupporterFeedback(UserResource user, CompetitionResource competition, ApplicationResource application) {
         return user.hasAnyRoles(Role.KNOWLEDGE_TRANSFER_ADVISER) && shouldDisplaySupporterFeedback(competition, application);
     }
 
-    private boolean shouldDisplayFeedback(CompetitionResource competition, ApplicationResource application) {
+    private boolean shouldDisplayFeedback(ApplicationResource application) {
         boolean isApplicationAssignedToInterview = interviewAssignmentRestService.isAssignedToInterview(application.getId()).getSuccess();
-        boolean feedbackAvailable = competition.getCompetitionStatus().isFeedbackReleased() || isApplicationAssignedToInterview;
+        boolean feedbackAvailable = application.isFeedbackReleased() || isApplicationAssignedToInterview;
         return application.isSubmitted()
                 && feedbackAvailable;
     }
 
     private boolean shouldDisplaySupporterFeedback(CompetitionResource competition, ApplicationResource application) {
-        boolean feedbackAvailable = competition.getCompetitionStatus().isFeedbackReleased();
+        boolean feedbackAvailable = application.isFeedbackReleased();
         return competition.isKtp() && application.isSubmitted() && feedbackAvailable;
     }
 }

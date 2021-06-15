@@ -10,6 +10,7 @@ import org.innovateuk.ifs.project.document.resource.DocumentStatus;
 import org.innovateuk.ifs.project.documents.form.DocumentForm;
 import org.innovateuk.ifs.project.documents.service.DocumentsRestService;
 import org.innovateuk.ifs.project.resource.ProjectResource;
+import org.innovateuk.ifs.util.MultipartFileAssertionUtil;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.springframework.core.io.ByteArrayResource;
@@ -77,9 +78,9 @@ public class DocumentsControllerTest extends BaseControllerMockMVCTest<Documents
 
         DocumentViewModel viewModel = new DocumentViewModel(projectId, "Project 12", applicationId,
                 documentConfigId, "Risk Register", "Guidance for Risk Register",
-                null, DocumentStatus.UNSET, "",true, true);
+                null, DocumentStatus.UNSET, "",true, true, false);
 
-        when(populator.populateViewDocument(projectId, loggedInUser.getId(), documentConfigId)).thenReturn(viewModel);
+        when(populator.populateViewDocument(projectId, loggedInUser, documentConfigId)).thenReturn(viewModel);
         MvcResult result = mockMvc.perform(get("/project/" + projectId + "/document/config/" + documentConfigId))
                 .andExpect(view().name("project/document"))
                 .andReturn();
@@ -106,9 +107,9 @@ public class DocumentsControllerTest extends BaseControllerMockMVCTest<Documents
 
         DocumentViewModel viewModel = new DocumentViewModel(projectId, "Project 12", applicationId,
                 documentConfigId, "Risk Register", "Guidance for Risk Register",
-                null, DocumentStatus.UNSET, "", true, true);
+                null, DocumentStatus.UNSET, "", true, true, false);
 
-        when(populator.populateViewDocument(projectId, loggedInUser.getId(), documentConfigId)).thenReturn(viewModel);
+        when(populator.populateViewDocument(projectId, loggedInUser, documentConfigId)).thenReturn(viewModel);
 
         MvcResult result = mockMvc.perform(
                 fileUpload("/project/" + projectId + "/document/config/" + documentConfigId).
@@ -125,7 +126,8 @@ public class DocumentsControllerTest extends BaseControllerMockMVCTest<Documents
         expectedForm.setDocument(uploadedFile);
 
         assertEquals(viewModel, returnedViewModel);
-        assertEquals(expectedForm, model.get("form"));
+        DocumentForm actual = (DocumentForm) model.get("form");
+        MultipartFileAssertionUtil.assertMultipartFile(uploadedFile, actual.getDocument());
     }
 
     @Test
@@ -207,9 +209,9 @@ public class DocumentsControllerTest extends BaseControllerMockMVCTest<Documents
 
         DocumentViewModel viewModel = new DocumentViewModel(projectId, "Project 12", applicationId,
                 documentConfigId, "Risk Register", "Guidance for Risk Register",
-                fileDetailsViewModel, DocumentStatus.SUBMITTED, "",true, true);
+                fileDetailsViewModel, DocumentStatus.SUBMITTED, "",true, true, false);
 
-        when(populator.populateViewDocument(projectId, loggedInUser.getId(), documentConfigId)).thenReturn(viewModel);
+        when(populator.populateViewDocument(projectId, loggedInUser, documentConfigId)).thenReturn(viewModel);
 
         MvcResult result = mockMvc.perform(
                 post("/project/" + projectId + "/document/config/" + documentConfigId)
@@ -257,9 +259,9 @@ public class DocumentsControllerTest extends BaseControllerMockMVCTest<Documents
 
         DocumentViewModel viewModel = new DocumentViewModel(projectId, "Project 12", applicationId,
                 documentConfigId, "Risk Register", "Guidance for Risk Register",
-                fileDetailsViewModel, DocumentStatus.UNSET, "",true, true);
+                fileDetailsViewModel, DocumentStatus.UNSET, "",true, true, false);
 
-        when(populator.populateViewDocument(projectId, loggedInUser.getId(), documentConfigId)).thenReturn(viewModel);
+        when(populator.populateViewDocument(projectId, loggedInUser, documentConfigId)).thenReturn(viewModel);
 
         MvcResult result = mockMvc.perform(
                 post("/project/" + projectId + "/document/config/" + documentConfigId)

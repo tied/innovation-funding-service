@@ -1,7 +1,6 @@
 package org.innovateuk.ifs.invite.controller;
 
 import org.innovateuk.ifs.commons.rest.RestResult;
-import org.innovateuk.ifs.commons.security.SecuredBySpring;
 import org.innovateuk.ifs.competition.resource.CompetitionOrganisationConfigResource;
 import org.innovateuk.ifs.competition.service.CompetitionOrganisationConfigRestService;
 import org.innovateuk.ifs.invite.populator.ConfirmOrganisationInviteModelPopulator;
@@ -93,7 +92,6 @@ public class AcceptInviteAuthenticatedController extends AbstractAcceptInviteCon
 
                     if (!loggedInUser.hasRole(Role.APPLICANT)) {
                         userRestService.grantRole(loggedInUser.getId(), Role.APPLICANT).getSuccess();
-                        cookieUtil.saveToCookie(response, "role", Role.APPLICANT.getName());
                     }
                     // Success
                     inviteRestService.acceptInvite(invite.getHash(), loggedInUser.getId()).getSuccess();

@@ -15,6 +15,7 @@ import org.innovateuk.ifs.commons.service.ServiceResult;
 import org.innovateuk.ifs.competition.resource.CompetitionResource;
 import org.innovateuk.ifs.competition.service.CompetitionRestService;
 import org.innovateuk.ifs.controller.ValidationHandler;
+import org.innovateuk.ifs.procurement.milestone.service.ApplicationProcurementMilestoneRestService;
 import org.innovateuk.ifs.user.resource.ProcessRoleResource;
 import org.innovateuk.ifs.user.resource.UserResource;
 import org.innovateuk.ifs.user.service.ProcessRoleRestService;
@@ -24,12 +25,14 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.ObjectUtils;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.Validator;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.time.LocalDate;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
@@ -57,6 +60,10 @@ public class ApplicationDetailsController {
     private ApplicationRestService applicationRestService;
     @Autowired
     private CompetitionRestService competitionRestService;
+
+    @Autowired
+    private ApplicationProcurementMilestoneRestService applicationProcurementMilestoneRestService;
+
     @Autowired
     @Qualifier("mvcValidator")
     private Validator validator;
@@ -175,12 +182,16 @@ public class ApplicationDetailsController {
         ApplicationResource application = applicationRestService.getApplicationById(applicationId).getSuccess();
         CompetitionResource competition = competitionRestService.getCompetitionById(application.getCompetition()).getSuccess();
 
-        LocalDate projectStartDate = competition.isKtp()
-                ? TimeZoneUtil.toUkTimeZone(competition.getEndDate()).plusMonths(12).toLocalDate()
-                : convertMinLocalDateToNull(form.getStartDate());
+        if (competition.isKtp() &&!competition.isAlwaysOpen()) {
+            // For always open ktp competitions we set the start date when the application is submitted and so do
+            // nothing here. Otherwise we set the date as being 12 months from the end of the competition.
+            application.setStartDate(TimeZoneUtil.toUkTimeZone(competition.getEndDate()).plusMonths(12).toLocalDate());
+        } else {
+            // For non ktp competitions the applicant provides a start date.  
+            application.setStartDate(convertMinLocalDateToNull(form.getStartDate()));
+        }
 
         application.setName(getName(form));
-        application.setStartDate(projectStartDate);
         application.setDurationInMonths(form.getDurationInMonths());
         application.setResubmission(form.getResubmission());
         application.setPreviousApplicationNumber(form.getResubmission() == TRUE ? form.getPreviousApplicationNumber() : null);
@@ -222,6 +233,20 @@ public class ApplicationDetailsController {
         if (competition.getInnovationAreas().size() > 1 && !application.getNoInnovationAreaApplicable()) {
             if (application.getInnovationArea() == null) {
                 bindingResult.rejectValue("innovationAreaErrorHolder", "validation.application.innovationarea.category.required");
+            }
+        }
+
+        if (!ObjectUtils.isEmpty(form.getDurationInMonths())) {
+            Optional<Integer> maxMilestoneMonth = applicationProcurementMilestoneRestService.findMaxByApplicationId(applicationId).getSuccess();
+            int maxMonths = competition.getMaxProjectDuration();
+            int minMonths = Math.max(maxMilestoneMonth.orElse(0), competition.getMinProjectDuration());
+            boolean minDictatedByCompetition = minMonths == competition.getMinProjectDuration();
+            if (form.getDurationInMonths() > maxMonths ||
+                    (minDictatedByCompetition && form.getDurationInMonths() < minMonths)) {
+                bindingResult.rejectValue("durationInMonths", "validation.project.duration.input.invalid", new Object[]{minMonths, maxMonths}, "validation.project.duration.input.invalid");
+            }
+            else if (form.getDurationInMonths() < minMonths) {
+                bindingResult.rejectValue("durationInMonths", "validation.project.duration.must.be.greater.than.milestones");
             }
         }
     }

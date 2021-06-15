@@ -11,6 +11,8 @@ Documentation     IFS-7365 DocuSign Integration
 ...
 ...               IFS-7440 Allow applicants to edit a submitted application
 ...
+...               IFS-9009  Always open competitions: invite assessors to competitions
+...
 Suite Setup       Custom Suite Setup
 Suite Teardown    Custom suite teardown
 Resource          ../../../resources/defaultResources.robot
@@ -92,7 +94,7 @@ Lead can resubmit the application
     Given the user can submit the application
 
 Internal user can invite to assesment
-    [Documentation]  IFS-7441
+    [Documentation]  IFS-7441  IFS-9009
     [Setup]  get application id by name and set as suite variable   ${COVIDdeminimusapplicationTitle1}
     Given Log in as a different user       &{Comp_admin1_credentials}
     When the user clicks the button/link   link = ${COVIDdeminimuscompetitionTitle}
@@ -146,7 +148,7 @@ Competition goes into previous
     Given the user clicks the button/link    jQuery = a:contains("Project setup (")
     And The user should not see the element  link = ${COVIDdeminimuscompetitionTitle}
     when the user clicks the button/link     jQuery = a:contains("Previous (")
-    Then the user should see the element     link = ${COVIDdeminimuscompetitionTitle}
+    then The user should see the element in the paginated list       link = ${COVIDdeminimuscompetitionTitle}
 
 *** Keywords ***
 Custom Suite Setup
@@ -290,7 +292,7 @@ invite assessor the the assesment
     the user clicks the button/link                    link = Invite
     the user clicks the button/link                    link = Review and send invites
     the user enters text to a text field               id = message    This is custom text
-    the user clicks the button/link                    jQuery = .govuk-button:contains("Send invite")
+    the user clicks the button/link                    jQuery = .govuk-button:contains("Send invitation")
     Log in as a different user                         &{assessor_credentials}
     the user clicks the button/link                    link = ${COVIDdeminimuscompetitionTitle}
     the user selects the radio button                  acceptInvitation  true
@@ -340,7 +342,7 @@ the user completes assessment and moves to PS
     invite assessor the the assesment
     log in as a different user                     &{Comp_admin1_credentials}
     making the application a successful project    ${COVIDdeminimuscompetitionId}  ${COVIDdeminimusapplicationTitle1}
-    the user reads his email                       steve.smith@empire.com   	${COVIDdeminimuscompetitionTitle}: Notification regarding your application ${application_id}: ${COVIDdeminimusapplicationTitle1}  Average assessor score
+    the user reads his email                       steve.smith@empire.com   	Important message about your application '${COVIDdeminimusapplicationTitle1}' for the competition '${COVIDdeminimuscompetitionTitle}'   Average assessor score
     moving competition to Project Setup            ${COVIDdeminimuscompetitionId}
 
 the internal user can complete PS

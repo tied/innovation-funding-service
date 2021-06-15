@@ -7,9 +7,6 @@ import org.innovateuk.ifs.competition.domain.Competition;
 import org.innovateuk.ifs.competition.repository.CompetitionRepository;
 import org.innovateuk.ifs.competition.resource.CompetitionResource;
 import org.innovateuk.ifs.security.BasePermissionRules;
-import org.innovateuk.ifs.supporter.repository.SupporterAssignmentRepository;
-import org.innovateuk.ifs.user.domain.ProcessRole;
-import org.innovateuk.ifs.user.resource.Role;
 import org.innovateuk.ifs.user.resource.UserResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -103,7 +100,7 @@ public class ApplicationPermissionRules extends BasePermissionRules {
 
     @PermissionRule(value = "UPDATE_APPLICATION_STATE", description = "A project finance user can update the state of an application")
     public boolean projectFinanceCanUpdateApplicationState(final ApplicationResource applicationResource, final UserResource user) {
-        return isProjectFinanceUser(user);
+        return hasProjectFinanceAuthority(user);
     }
 
     @PermissionRule(
@@ -128,7 +125,7 @@ public class ApplicationPermissionRules extends BasePermissionRules {
             description = "A Project Finance user can remove Assessor Feedback documentation so long as the Feedback has not yet been published",
             particularBusinessState = "Application's Competition Status != 'Project Setup' or beyond")
     public boolean projectFinanceUserCanRemoveAssessorFeedbackThatHasNotYetBeenPublished(ApplicationResource application, UserResource user) {
-        return isProjectFinanceUser(user) && !application.isInPublishedAssessorFeedbackCompetitionState();
+        return hasProjectFinanceAuthority(user) && !application.isInPublishedAssessorFeedbackCompetitionState();
     }
 
     @PermissionRule(
@@ -174,5 +171,6 @@ public class ApplicationPermissionRules extends BasePermissionRules {
     private boolean isCompetitionBeyondAssessment(final Competition competition) {
         return EnumSet.of(FUNDERS_PANEL, ASSESSOR_FEEDBACK, PROJECT_SETUP).contains(competition.getCompetitionStatus());
     }
+
 }
 

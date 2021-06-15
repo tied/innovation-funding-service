@@ -17,6 +17,8 @@ Documentation    IFS-8260  KTP Assigning assessors
 ...
 ...              IFS-8550 Release supporter feedback to KTA
 ...
+...              IFS-9246 KTP fEC/Non-fEC: application changes for read-only viewers
+...
 Suite Setup       Custom suite setup
 Suite Teardown    the user closes the browser
 Resource          ../../../resources/defaultResources.robot
@@ -50,7 +52,7 @@ ${KTPapplicationId}                         ${application_ids["${KTPapplication}
 ${KTPcompetiton}                            KTP in panel
 ${ktpLead}                                  bob@knowledge.base
 ${ktpPartner}                               jessica.doe@ludlow.co.uk
-
+${uploadedPdf}                              fec-file
 
 *** Test Cases ***
 Comp admin can find the registered KTA in system
@@ -77,7 +79,7 @@ Invite the KTA to assess the KTP competition
     Given the user selects the checkbox       assessor-row-1
     And the user clicks the button/link       id = add-selected-assessors-to-invite-list-button
     When the user clicks the button/link      id = review-and-send-assessor-invites-button
-    And the user clicks the button/link       jQuery = button:contains("Send invite")
+    And the user clicks the button/link       jQuery = button:contains("Send invitation")
     Then the user should see the element      link = Amy Colin
 
 Assessor accept the inviation to assess the KTP competition
@@ -111,9 +113,15 @@ Assessor can see lead organisation project finances when all option selected in 
     And the user should see the element       link = Your project location
     And the user should see the element       link = Your funding
 
+Assessor can view the read-only view for 'Yes' selected fEC declaration
+    [Documentation]  IFS-9246
+    Given the user clicks the button/link                           link = Your fEC model
+    Then the user should see read only view for FEC declaration
+
 Assessor can see partner organisation project finances when all option selected in assessor view of fiannces in competition setup
     [Documentation]  IFS-8453
-    Given the user clicks the button/link     link = Back to finances overview
+    Given the user clicks the button/link     link = Back to your project finances
+    And the user clicks the button/link       link = Back to finances overview
     When the user clicks the button/link      jQuery = div:contains("Ludlow") ~ a:contains("View finances")
     Then the user should see the element      link = Your organisation
     And the user should see the element       link = Your project location
@@ -384,7 +392,7 @@ KTA accepts the invitation to assess the application
 
 KTA accepts to assess the KTP application
     [Arguments]   ${compettitionName}                    ${ktaEmail}  ${short_password}
-    log in as a different user           ${ktaEmail}  ${short_password}
+    log in as a different user                           ${ktaEmail}  ${short_password}
     the user clicks the assessment tile if displayed
     the user clicks the button/link                       link = ${compettitionName}
     the user clicks the button/link                       link = Accept or reject
@@ -450,7 +458,7 @@ Invite KTA to assess the competition
     ...                              ELSE     the user selects the checkbox     assessor-row-1
     the user clicks the button/link                          id = add-selected-assessors-to-invite-list-button
     the user clicks the button/link                          id = review-and-send-assessor-invites-button
-    the user clicks the button/link                          jQuery = button:contains("Send invite")
+    the user clicks the button/link                          jQuery = button:contains("Send invitation")
     KTA accepts the invitation to assess the application     ${competitionName}  ${email}   ${short_password}
     Log in as a different user                               &{ifs_admin_user_credentials}
     the user navigates to the page                           ${server}/management/assessment/competition/${competitionID}/applications
@@ -540,3 +548,14 @@ IFS admin releases feedback on making application sucessful
     the user refreshes until element appears on page     id = release-feedback-button
     the user clicks the button/link                      id = release-feedback-button
 
+the user should see read only view for FEC declaration
+    the user should not see the element                     jQuery = button:contains("Edit your fEC Model")
+    the user checks the read-only page
+
+the user checks the read-only page
+    # Due to us testing webtest data here, the file does not exist so we check for only no internal server errors. Page not found is OK in this case.
+    the user should see the element                                  jQuery = legend:contains("Will you be using the full economic costing (fEC) funding model?") > p:contains("Yes")
+    the user clicks the button/link                                  jQuery = h3:contains("View fEC certificate") ~ div a:contains("${uploadedPdf}")
+    Select Window                                                    NEW
+    the user should not see internal server and forbidden errors
+    the user closes the last opened tab

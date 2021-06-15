@@ -10,8 +10,8 @@ import org.innovateuk.ifs.competition.domain.ExternalFinance;
 import org.innovateuk.ifs.competition.domain.Stakeholder;
 import org.innovateuk.ifs.competition.mapper.ExternalFinanceRepository;
 import org.innovateuk.ifs.competition.repository.StakeholderRepository;
+import org.innovateuk.ifs.project.core.ProjectParticipantRole;
 import org.innovateuk.ifs.project.core.domain.Project;
-import org.innovateuk.ifs.project.core.domain.ProjectParticipantRole;
 import org.innovateuk.ifs.project.core.domain.ProjectUser;
 import org.innovateuk.ifs.project.core.repository.ProjectUserRepository;
 import org.innovateuk.ifs.project.monitoring.domain.MonitoringOfficer;
@@ -32,8 +32,8 @@ import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.disjoint;
-import static org.innovateuk.ifs.project.core.domain.ProjectParticipantRole.PROJECT_FINANCE_CONTACT;
-import static org.innovateuk.ifs.project.core.domain.ProjectParticipantRole.PROJECT_PARTNER;
+import static org.innovateuk.ifs.project.core.ProjectParticipantRole.PROJECT_FINANCE_CONTACT;
+import static org.innovateuk.ifs.project.core.ProjectParticipantRole.PROJECT_PARTNER;
 import static org.innovateuk.ifs.user.resource.Role.*;
 import static org.innovateuk.ifs.util.CollectionFunctions.*;
 import static org.innovateuk.ifs.util.SecurityRuleUtil.*;
@@ -66,11 +66,11 @@ public class UserPermissionRules {
     @Autowired
     private ApplicationSecurityHelper applicationSecurityHelper;
 
-    private static List<Role> CONSORTIUM_ROLES = asList(LEADAPPLICANT, COLLABORATOR);
+    private static List<ProcessRoleType> CONSORTIUM_ROLES = asList(ProcessRoleType.LEADAPPLICANT, ProcessRoleType.COLLABORATOR);
 
     private static Predicate<ProcessRole> consortiumProcessRoleFilter = role -> CONSORTIUM_ROLES.contains(role.getRole());
 
-    private static List<Role> ASSESSOR_ROLES = asList(ASSESSOR, PANEL_ASSESSOR, INTERVIEW_ASSESSOR);
+    private static List<ProcessRoleType> ASSESSOR_ROLES = asList(ProcessRoleType.ASSESSOR, ProcessRoleType.PANEL_ASSESSOR, ProcessRoleType.INTERVIEW_ASSESSOR);
 
     private static Predicate<ProcessRole> assessorProcessRoleFilter = role -> ASSESSOR_ROLES.contains(role.getRole());
 
@@ -86,7 +86,7 @@ public class UserPermissionRules {
     @PermissionRule(value = "CREATE", description = "An internal user can invite a monitoring officer and create the pending user associated.")
     public boolean compAdminProjectFinanceCanCreateMonitoringOfficer(UserCreationResource userToCreate, UserResource user) {
         return userToCreate.getRole() == MONITORING_OFFICER &&
-                (isCompAdmin(user) || isProjectFinanceUser(user));
+                (isCompAdmin(user) || hasProjectFinanceAuthority(user));
     }
 
     @PermissionRule(value = "CREATE", description = "A System Registration User can create new Users on behalf of non-logged in users")
@@ -116,7 +116,7 @@ public class UserPermissionRules {
 
     @PermissionRule(value = "UPDATE_USER_EMAIL", description = "IFS admins can update all users email addresses")
     public boolean ifsAdminCanUpdateAllEmailAddresses(UserResource userToUpdate, UserResource user) {
-        return user.hasRole(IFS_ADMINISTRATOR);
+        return user.hasAuthority(Authority.IFS_ADMINISTRATOR);
     }
 
     @PermissionRule(value = "UPDATE_USER_EMAIL", description = "Support users can update external users email addresses ")
@@ -131,7 +131,7 @@ public class UserPermissionRules {
 
     @PermissionRule(value = "READ_INTERNAL", description = "Administrators can view internal users")
     public boolean internalUsersCanViewEveryone(ManageUserPageResource userToView, UserResource user) {
-        return user.hasAnyRoles(IFS_ADMINISTRATOR);
+        return user.hasAuthority(Authority.IFS_ADMINISTRATOR);
     }
 
     @PermissionRule(value = "READ", description = "The System Registration user can view everyone")
@@ -141,8 +141,8 @@ public class UserPermissionRules {
 
     @PermissionRule(value = "READ", description = "Comp admins and project finance can view assessors")
     public boolean compAdminAndProjectFinanceCanViewAssessors(UserPageResource usersToView, UserResource user) {
-        return usersToView.getContent().stream().allMatch(u -> u.hasAnyRoles(ASSESSOR_ROLES)) &&
-                user.hasAnyRoles(COMP_ADMIN, PROJECT_FINANCE);
+        return usersToView.getContent().stream().allMatch(u -> u.hasRole(ASSESSOR)) &&
+                user.hasAuthority(Authority.COMP_ADMIN);
     }
 
     @PermissionRule(value = "READ", description = "Consortium members (Lead Applicants and Collaborators) can view the others in their Consortium Teams on their various Applications")
@@ -242,7 +242,7 @@ public class UserPermissionRules {
 
     @PermissionRule(value = "READ", description = "Support users and administrators can view external users")
     public boolean supportUsersCanViewExternalUsers(ManageUserPageResource userToView, UserResource user) {
-        return user.hasAnyRoles(IFS_ADMINISTRATOR, SUPPORT);
+        return user.hasAnyAuthority(asList(Authority.IFS_ADMINISTRATOR, Authority.SUPPORT));
     }
 
     @PermissionRule(value = "READ", description = "Internal users can view everyone")
@@ -288,12 +288,12 @@ public class UserPermissionRules {
 
     @PermissionRule(value = "EDIT_INTERNAL_USER", description = "Only an IFS Administrator can edit an internal user")
     public boolean ifsAdminCanEditInternalUser(final UserResource userToEdit, UserResource user) {
-        return user.hasRole(Role.IFS_ADMINISTRATOR);
+        return user.hasAuthority(Authority.IFS_ADMINISTRATOR);
     }
 
     @PermissionRule(value = "DEACTIVATE", description = "IFS Administrator can deactivate Users")
     public boolean ifsAdminCanDeactivateUsers(UserResource userToDeactivate, UserResource user) {
-        return user.hasRole(Role.IFS_ADMINISTRATOR);
+        return user.hasAuthority(Authority.IFS_ADMINISTRATOR);
     }
 
     @PermissionRule(value = "DEACTIVATE", description = "A Support user can deactivate external Users")
@@ -308,7 +308,7 @@ public class UserPermissionRules {
 
     @PermissionRule(value = "ACTIVATE", description = "IFS Administrator can reactivate Users")
     public boolean ifsAdminCanReactivateUsers(UserResource userToReactivate, UserResource user) {
-        return user.hasRole(Role.IFS_ADMINISTRATOR);
+        return user.hasAuthority(Authority.IFS_ADMINISTRATOR);
     }
 
     @PermissionRule(value = "ACTIVATE", description = "A Support user can reactivate external Users")
@@ -348,7 +348,7 @@ public class UserPermissionRules {
     }
 
     private boolean hasPermissionToGrantRole(UserResource user) {
-        return user.hasAnyRoles(COMP_ADMIN, PROJECT_FINANCE, IFS_ADMINISTRATOR);
+        return user.hasAuthority(Authority.COMP_ADMIN);
     }
 
     private boolean userIsInCompetitionAssignedToStakeholder(long userToViewId, UserResource stakeholder) {

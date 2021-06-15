@@ -3,13 +3,16 @@ package org.innovateuk.ifs.organisation.resource;
 import java.util.Objects;
 
 public class OrganisationSicCodeResource {
-
     private Long id;
     private Long organisation;
     private String sicCode;
 
     public OrganisationSicCodeResource() {
+    }
 
+
+    public OrganisationSicCodeResource(String sicCode) {
+        this.sicCode = sicCode;
     }
 
     public OrganisationSicCodeResource(Long organisation, String sicCode) {
@@ -37,22 +40,20 @@ public class OrganisationSicCodeResource {
         return sicCode;
     }
 
-    public OrganisationSicCodeResource(String sicCode) {
-        this.sicCode = sicCode;
-    }
 
     public void setSicCode(String sicCode) {
         this.sicCode = sicCode;
     }
+
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         OrganisationSicCodeResource that = (OrganisationSicCodeResource) o;
-        return id.equals(that.id) &&
-                organisation.equals(that.organisation) &&
-                sicCode.equals(that.sicCode);
+        return Objects.equals(id, that.id) &&
+                Objects.equals(organisation, that.organisation) &&
+                Objects.equals(sicCode, that.sicCode);
     }
 
     @Override

@@ -64,6 +64,7 @@ public class CompetitionResourceDocs {
             fieldWithPath("nonIfsUrl").description("The URL to apply to the competition if it is a non-ifs competition").optional(),
             fieldWithPath("assessorFinanceView").description("Indicates if the competition will display an overview or a detailed view of the finances for the assessor").optional(),
             fieldWithPath("termsAndConditions").description("The terms and conditions template that applies to this competition").optional(),
+            fieldWithPath("otherFundingRulesTermsAndConditions").description("The terms and conditions template that applies to this competition for its other funding rules").optional(),
             fieldWithPath("minProjectDuration").description("The minimum amount of weeks that projects under this competition should last").optional(),
             fieldWithPath("maxProjectDuration").description("The maximum amount of weeks that projects under this competition projects should last").optional(),
             fieldWithPath("fundingRules").description("Indicates if the competition has state aid eligibility, subsidy control eligibility, or none").optional(),
@@ -82,7 +83,12 @@ public class CompetitionResourceDocs {
             fieldWithPath("modifiedOn").description("when the competition was modified").optional(),
             fieldWithPath("hasAssessmentStage").description("Does the competition has assessors.").optional(),
             fieldWithPath("covidType").description("The type of covid comp if any").optional(),
-            fieldWithPath("golTemplate").description("template").optional()
+            fieldWithPath("golTemplate").description("template").optional(),
+            fieldWithPath("alwaysOpen").description("Competition always open").optional(),
+            fieldWithPath("procurementMilestones").description("Does the competition have procurement milestones").optional(),
+            fieldWithPath("subsidyControl").description("Is the competition subsidy controlled").optional(),
+            fieldWithPath("hasBusinessAndFinancialInformationQuestion").description("Does the competition have the business and financial information question").optional(),
+            fieldWithPath("assessmentPeriods").description("The assessment periods on the competition").optional(),
     };
 
     public static final CompetitionResourceBuilder competitionResourceBuilder = newCompetitionResource()
@@ -119,5 +125,6 @@ public class CompetitionResourceDocs {
             .withFundingRules(FundingRules.STATE_AID)
             .withIncludeJesForm(true)
             .withFundingType(FundingType.PROCUREMENT)
-            .withCompetitionTerms((FileEntryResource) null);
+            .withCompetitionTerms((FileEntryResource) null)
+            .withAlwaysOpen(false);
 }

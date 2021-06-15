@@ -20,6 +20,7 @@ import org.innovateuk.ifs.form.resource.SectionResource;
 import org.innovateuk.ifs.form.resource.SectionType;
 import org.innovateuk.ifs.organisation.resource.OrganisationResource;
 import org.innovateuk.ifs.organisation.resource.OrganisationTypeEnum;
+import org.innovateuk.ifs.user.resource.ProcessRoleType;
 import org.innovateuk.ifs.user.resource.Role;
 import org.innovateuk.ifs.user.resource.UserResource;
 import org.innovateuk.ifs.user.service.OrganisationRestService;
@@ -42,6 +43,7 @@ import static org.innovateuk.ifs.form.builder.QuestionResourceBuilder.newQuestio
 import static org.innovateuk.ifs.form.builder.SectionResourceBuilder.newSectionResource;
 import static org.innovateuk.ifs.organisation.builder.OrganisationResourceBuilder.newOrganisationResource;
 import static org.innovateuk.ifs.question.resource.QuestionSetupType.RESEARCH_CATEGORY;
+import static org.innovateuk.ifs.question.resource.QuestionSetupType.SUBSIDY_BASIS;
 import static org.innovateuk.ifs.user.builder.ProcessRoleResourceBuilder.newProcessRoleResource;
 import static org.innovateuk.ifs.user.builder.UserResourceBuilder.newUserResource;
 import static org.innovateuk.ifs.util.MapFunctions.asMap;
@@ -104,7 +106,7 @@ public class YourFundingViewModelPopulatorTest extends BaseServiceUnitTest<YourF
         ApplicantResource applicant = newApplicantResource()
                 .withProcessRole(newProcessRoleResource()
                         .withUser(user)
-                        .withRoleName("leadapplicant")
+                        .withRole(ProcessRoleType.LEADAPPLICANT)
                         .build())
                 .withOrganisation(organisation)
                 .build();
@@ -127,13 +129,17 @@ public class YourFundingViewModelPopulatorTest extends BaseServiceUnitTest<YourF
                 .build();
 
         QuestionResource researchCategoryQuestion = newQuestionResource().build();
+        QuestionResource subsidyBasisQuestion = newQuestionResource().build();
 
         when(questionRestService.getQuestionByCompetitionIdAndQuestionSetupType(section.getCompetition().getId(), RESEARCH_CATEGORY))
                 .thenReturn(restSuccess(researchCategoryQuestion));
+        when(questionRestService.getQuestionByCompetitionIdAndQuestionSetupType(section.getCompetition().getId(), SUBSIDY_BASIS))
+                .thenReturn(restSuccess(subsidyBasisQuestion));
 
         when(questionService
                 .getQuestionStatusesForApplicationAndOrganisation(APPLICATION_ID, section.getCurrentApplicant().getOrganisation().getId()))
-                .thenReturn(asMap(researchCategoryQuestion.getId(), newQuestionStatusResource().withMarkedAsComplete(true).build()));
+                .thenReturn(asMap(researchCategoryQuestion.getId(), newQuestionStatusResource().withMarkedAsComplete(true).build(),
+                                  subsidyBasisQuestion.getId(), newQuestionStatusResource().withMarkedAsComplete(true).build()));
 
         SectionResource yourOrgSection = newSectionResource().build();
         when(sectionService.getOrganisationFinanceSection(section.getCompetition().getId())).thenReturn(yourOrgSection);

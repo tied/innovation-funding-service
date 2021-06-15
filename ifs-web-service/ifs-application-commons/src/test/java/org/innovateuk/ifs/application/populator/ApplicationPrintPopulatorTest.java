@@ -13,6 +13,7 @@ import org.innovateuk.ifs.competition.service.CompetitionRestService;
 import org.innovateuk.ifs.interview.service.InterviewAssignmentRestService;
 import org.innovateuk.ifs.user.builder.UserResourceBuilder;
 import org.innovateuk.ifs.user.resource.ProcessRoleResource;
+import org.innovateuk.ifs.user.resource.ProcessRoleType;
 import org.innovateuk.ifs.user.resource.Role;
 import org.innovateuk.ifs.user.resource.UserResource;
 import org.innovateuk.ifs.user.service.ProcessRoleRestService;
@@ -25,6 +26,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.ui.Model;
 
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -76,11 +78,12 @@ public class ApplicationPrintPopulatorTest {
         ApplicationResource application = newApplicationResource()
                 .withId(applicationId)
                 .withCompetition(competition.getId())
+                .withFeedbackReleased(ZonedDateTime.now())
                 .withApplicationState(ApplicationState.SUBMITTED)
                 .build();
 
         ProcessRoleResource assessor = newProcessRoleResource()
-                .withRole(Role.ASSESSOR)
+                .withRole(ProcessRoleType.ASSESSOR)
                 .withUser(user)
                 .build();
 
@@ -119,10 +122,11 @@ public class ApplicationPrintPopulatorTest {
                 .withId(applicationId)
                 .withCompetition(competition.getId())
                 .withApplicationState(ApplicationState.SUBMITTED)
+                .withFeedbackReleased(ZonedDateTime.now())
                 .build();
 
         List<ProcessRoleResource> kta = newProcessRoleResource()
-                .withRole(Role.ASSESSOR, Role.KNOWLEDGE_TRANSFER_ADVISER)
+                .withRole(ProcessRoleType.ASSESSOR, ProcessRoleType.KNOWLEDGE_TRANSFER_ADVISER)
                 .withUser(user, user)
                 .build(2);
 

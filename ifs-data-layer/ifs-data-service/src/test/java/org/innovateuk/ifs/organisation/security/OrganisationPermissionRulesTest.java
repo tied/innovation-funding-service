@@ -11,6 +11,8 @@ import org.innovateuk.ifs.project.core.domain.Project;
 import org.innovateuk.ifs.project.core.domain.ProjectUser;
 import org.innovateuk.ifs.project.monitoring.domain.MonitoringOfficer;
 import org.innovateuk.ifs.user.domain.ProcessRole;
+import org.innovateuk.ifs.user.resource.Authority;
+import org.innovateuk.ifs.user.resource.ProcessRoleType;
 import org.innovateuk.ifs.user.resource.UserResource;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -132,7 +134,7 @@ public class OrganisationPermissionRulesTest extends BasePermissionRulesTest<Org
 
         ProcessRole processRole = newProcessRole()
                 .withOrganisation(organisation)
-                .withRole(COLLABORATOR)
+                .withRole(ProcessRoleType.COLLABORATOR)
                 .build();
 
         Application application = newApplication()
@@ -176,7 +178,7 @@ public class OrganisationPermissionRulesTest extends BasePermissionRulesTest<Org
     @Test
     public void projectFinanceUserCanUpdateAllOrganisations() {
         allGlobalRoleUsers.forEach(user -> {
-            if (user.equals(projectFinanceUser())) {
+            if (user.hasAuthority(Authority.PROJECT_FINANCE)) {
                 assertTrue(rules.projectFinanceUserCanUpdateAnyOrganisation(newOrganisationResource().build(), user));
             } else {
                 assertFalse(rules.projectFinanceUserCanUpdateAnyOrganisation(newOrganisationResource().build(), user));
@@ -389,6 +391,30 @@ public class OrganisationPermissionRulesTest extends BasePermissionRulesTest<Org
 
         assertTrue(rules.usersCanViewOrganisationsTheyAreInvitedTo(organisation, invitedUser));
         assertFalse(rules.usersCanViewOrganisationsTheyAreInvitedTo(organisation, notInvitedUser));
+    }
+
+    @Test
+    public void systemRegistrationUserCanSyncOrganisationDetailsForCompaniesHouseUpdate() {
+        OrganisationResource organisation = newOrganisationResource().build();
+        allGlobalRoleUsers.forEach(user -> {
+            when(processRoleRepository.existsByUserIdAndOrganisationId(user.getId(), organisation.getId())).thenReturn(false);
+            if (user.equals(systemRegistrationUser())) {
+                assertTrue(rules.systemRegistrationUserCanSyncOrganisationDetailsForCompaniesHouseUpdate(organisation, user));
+            } else {
+                assertFalse(rules.systemRegistrationUserCanSyncOrganisationDetailsForCompaniesHouseUpdate(organisation, user));
+            }
+        });
+    }
+
+    @Test
+    public void memberOfOrganisationCanSyncOrganisationDetailsForCompaniesHouseUpdate() {
+
+        UserResource user = newUserResource().build();
+
+        OrganisationResource organisation = newOrganisationResource().build();
+        when(processRoleRepository.existsByUserIdAndOrganisationId(user.getId(), organisation.getId())).thenReturn(true);
+
+        assertTrue(rules.systemRegistrationUserCanSyncOrganisationDetailsForCompaniesHouseUpdate(organisation, user));
     }
 
     @Override

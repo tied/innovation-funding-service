@@ -3,6 +3,7 @@ package org.innovateuk.ifs.management.notification.viewmodel;
 
 import org.innovateuk.ifs.application.resource.FundingDecision;
 import org.innovateuk.ifs.application.resource.FundingDecisionToSendApplicationResource;
+import org.innovateuk.ifs.competition.resource.CompetitionResource;
 
 import java.util.Collections;
 import java.util.List;
@@ -19,27 +20,24 @@ public class SendNotificationsViewModel {
     private long onHoldRecipientsCount;
     private boolean h2020;
     private boolean includeAssessorsScore;
-    private boolean heukar;
+    private boolean alwaysOpen;
 
     public SendNotificationsViewModel(List<FundingDecisionToSendApplicationResource> applications,
                                       long successfulRecipientsCount,
                                       long unsuccessfulRecipientsCount,
                                       long onHoldRecipientsCount,
-                                      long competitionId,
-                                      String competitionName,
-                                      boolean h2020,
-                                      boolean includeAssessorsScore,
-                                      boolean heukar) {
+                                      CompetitionResource competition,
+                                      boolean includeAssessorsScore) {
 
         this.successfulRecipientsCount = successfulRecipientsCount;
         this.unsuccessfulRecipientsCount = unsuccessfulRecipientsCount;
         this.onHoldRecipientsCount = onHoldRecipientsCount;
         this.applications = applications;
-        this.competitionId = competitionId;
-        this.competitionName = competitionName;
-        this.h2020 = h2020;
+        this.competitionId = competition.getId();
+        this.competitionName = competition.getName();
+        this.h2020 = competition.isH2020();
+        this.alwaysOpen = competition.isAlwaysOpen();
         this.includeAssessorsScore = includeAssessorsScore;
-        this.heukar = heukar;
     }
 
     public long getCompetitionId() {
@@ -74,6 +72,14 @@ public class SendNotificationsViewModel {
         return includeAssessorsScore;
     }
 
+    public boolean isAlwaysOpen() {
+        return alwaysOpen;
+    }
+
+    public String getPageTitle () {
+        return alwaysOpen ? "Send decision notification and release feedback" : "Send decision notification";
+    }
+
     public Map<Long, FundingDecision> getFundingDecisions() {
         return getApplications()
                 .stream()
@@ -81,9 +87,5 @@ public class SendNotificationsViewModel {
                         FundingDecisionToSendApplicationResource::getId,
                         FundingDecisionToSendApplicationResource::getFundingDecision
                 ));
-    }
-
-    public boolean isHeukar() {
-        return heukar;
     }
 }

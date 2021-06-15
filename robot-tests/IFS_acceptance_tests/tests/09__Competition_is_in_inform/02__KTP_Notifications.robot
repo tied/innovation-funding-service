@@ -28,6 +28,8 @@ ${ktp_Partner_email}                jessica.doe@ludlow.co.uk
 ${MemberName}                       Member
 ${MemberEmail}                      member_email@gmail.com
 &{MemberCredentials}                email=${MemberEmail}    password=${short_password}
+${ktp_notification_application_id}      ${application_ids["KTP notifications application"]}
+
 
 *** Test Cases ***
 Lead invites a new team member to the project
@@ -46,10 +48,10 @@ Internal user marks the KTP application as unsuccessful
 
 Internal user checks the status of the application
     [Documentation]  IFS-8549
-    Given the user navigates to the page                          ${server}/management/dashboard/previous
-    When the user clicks the button/link                          link = ${KTP_competiton}
-    And the user clicks the button/link                           jQuery = button:contains("Projects")
-    Then the user should see the element                          jQuery = tbody div:contains("${KTP_application}") ~ div:contains("Unsuccessful")
+    Given the user navigates to the page                                            ${server}/management/dashboard/previous
+    And the user clicks the button/link in the paginated list with selector         jQuery = button:contains('Next')     link = ${KTP_competiton}
+    And the user clicks the button/link                                             jQuery = button:contains("Projects")
+    Then the user should see the element                                            jQuery = tbody div:contains("${KTP_application}") ~ div:contains("Unsuccessful")
     And the user cannot make any changes in the project setup
 
 The lead checks the status of the application
@@ -105,9 +107,9 @@ the user makes the application unsuccessful and sends notification
      the user should see the element    jQuery = td:contains("${KTP_application}") ~ td:contains("Unsuccessful")
      the user clicks the button/link    link = Competition
      the user clicks the button/link    link = Manage funding notifications
-     the user selects the checkbox      app-row-301
+     the user selects the checkbox      app-row-${ktp_notification_application_id}
      the user clicks the button/link    jQuery = button:contains("Write and send email")
-     the user clicks the button/link    jQuery = button:contains("Send email to all applicants")
+     the user clicks the button/link    jQuery = button:contains("Send notification")
      the user clicks the button/link    jQuery = .send-to-all-applicants-modal button:contains("Send email to all applicants")
      the user should see the element    jQuery = td:contains("${KTP_application}") ~ td:contains("Unsuccessful") ~ td:contains("Sent")
 
@@ -171,12 +173,12 @@ the user is able to view the application overview page
     the user should see the element         jQuery = dt:contains("Application name:") ~ dd:contains("${KTP_application}")
 
 Project users checks their email
-    The user reads his email     ${ktp_KTA_email}               KTP notifications: Notification regarding your application ${KTP_applicationId}: ${KTP_application}     Thank you for submitting your application for this funding competition
-    The user reads his email     ${ktp_Partner_email}           KTP notifications: Notification regarding your application ${KTP_applicationId}: ${KTP_application}     Thank you for submitting your application for this funding competition
-    The user reads his email     ${ktp_Lead_email}              KTP notifications: Notification regarding your application ${KTP_applicationId}: ${KTP_application}     Thank you for submitting your application for this funding competition
-    The user reads his email     bobs.mate@knowledge.base       KTP notifications: Notification regarding your application ${KTP_applicationId}: ${KTP_application}     Thank you for submitting your application for this funding competition
-    The user reads his email     kevin.summers@ludlow.co.uk     KTP notifications: Notification regarding your application ${KTP_applicationId}: ${KTP_application}     Thank you for submitting your application for this funding competition
-    The user reads his email     ${MemberEmail}                 KTP notifications: Notification regarding your application ${KTP_applicationId}: ${KTP_application}     Thank you for submitting your application for this funding competition
+    The user reads his email     ${ktp_KTA_email}               Important message about your application '${KTP_application}' for the competition 'KTP notifications'   Thank you for submitting your application for this funding competition
+    The user reads his email     ${ktp_Partner_email}           Important message about your application '${KTP_application}' for the competition 'KTP notifications'   Thank you for submitting your application for this funding competition
+    The user reads his email     ${ktp_Lead_email}              Important message about your application '${KTP_application}' for the competition 'KTP notifications'   Thank you for submitting your application for this funding competition
+    The user reads his email     bobs.mate@knowledge.base       Important message about your application '${KTP_application}' for the competition 'KTP notifications'   Thank you for submitting your application for this funding competition
+    The user reads his email     kevin.summers@ludlow.co.uk     Important message about your application '${KTP_application}' for the competition 'KTP notifications'   Thank you for submitting your application for this funding competition
+    The user reads his email     ${MemberEmail}                 Important message about your application '${KTP_application}' for the competition 'KTP notifications'   Thank you for submitting your application for this funding competition
 
 the lead invites a team member to the project
     the user clicks the button/link          link = Project team

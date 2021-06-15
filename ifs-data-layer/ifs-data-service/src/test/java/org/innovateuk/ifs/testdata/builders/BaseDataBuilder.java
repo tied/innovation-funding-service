@@ -10,6 +10,7 @@ import org.innovateuk.ifs.application.mapper.IneligibleOutcomeMapper;
 import org.innovateuk.ifs.application.repository.ApplicationRepository;
 import org.innovateuk.ifs.application.repository.FormInputResponseRepository;
 import org.innovateuk.ifs.application.transactional.*;
+import org.innovateuk.ifs.assessment.period.repository.AssessmentPeriodRepository;
 import org.innovateuk.ifs.assessment.repository.AssessmentInviteRepository;
 import org.innovateuk.ifs.assessment.repository.AssessmentParticipantRepository;
 import org.innovateuk.ifs.assessment.repository.AssessmentRepository;
@@ -23,10 +24,8 @@ import org.innovateuk.ifs.category.repository.InnovationAreaRepository;
 import org.innovateuk.ifs.category.repository.InnovationSectorRepository;
 import org.innovateuk.ifs.category.repository.ResearchCategoryRepository;
 import org.innovateuk.ifs.competition.domain.Competition;
-import org.innovateuk.ifs.competition.repository.CompetitionFunderRepository;
-import org.innovateuk.ifs.competition.repository.CompetitionOrganisationConfigRepository;
-import org.innovateuk.ifs.competition.repository.CompetitionRepository;
-import org.innovateuk.ifs.competition.repository.CompetitionTypeRepository;
+import org.innovateuk.ifs.competition.repository.*;
+import org.innovateuk.ifs.competition.transactional.CompetitionApplicationConfigService;
 import org.innovateuk.ifs.competition.transactional.CompetitionAssessmentConfigService;
 import org.innovateuk.ifs.competition.transactional.CompetitionService;
 import org.innovateuk.ifs.competition.transactional.MilestoneService;
@@ -86,6 +85,14 @@ import org.innovateuk.ifs.publiccontent.transactional.ContentGroupService;
 import org.innovateuk.ifs.publiccontent.transactional.PublicContentService;
 import org.innovateuk.ifs.question.transactional.QuestionSetupCompetitionService;
 import org.innovateuk.ifs.question.transactional.template.QuestionSetupAddAndRemoveService;
+import org.innovateuk.ifs.questionnaire.config.service.QuestionnaireOptionService;
+import org.innovateuk.ifs.questionnaire.config.service.QuestionnaireQuestionService;
+import org.innovateuk.ifs.questionnaire.config.service.QuestionnaireService;
+import org.innovateuk.ifs.questionnaire.config.service.QuestionnaireTextOutcomeService;
+import org.innovateuk.ifs.questionnaire.link.repository.ApplicationOrganisationQuestionnaireResponseRepository;
+import org.innovateuk.ifs.questionnaire.response.repository.QuestionnaireResponseRepository;
+import org.innovateuk.ifs.questionnaire.response.service.QuestionnaireQuestionResponseService;
+import org.innovateuk.ifs.questionnaire.response.service.QuestionnaireResponseService;
 import org.innovateuk.ifs.review.repository.ReviewInviteRepository;
 import org.innovateuk.ifs.review.transactional.ReviewInviteService;
 import org.innovateuk.ifs.review.transactional.ReviewService;
@@ -99,6 +106,7 @@ import org.innovateuk.ifs.user.repository.ProcessRoleRepository;
 import org.innovateuk.ifs.user.repository.RoleProfileStatusRepository;
 import org.innovateuk.ifs.user.repository.UserRepository;
 import org.innovateuk.ifs.user.resource.ProcessRoleResource;
+import org.innovateuk.ifs.user.resource.ProcessRoleType;
 import org.innovateuk.ifs.user.resource.Role;
 import org.innovateuk.ifs.user.resource.UserResource;
 import org.innovateuk.ifs.user.transactional.*;
@@ -230,6 +238,17 @@ public abstract class BaseDataBuilder<T, S> extends BaseBuilder<T, S> {
     protected InviteUserService inviteUserService;
     protected SupporterAssignmentService supporterAssignmentService;
     protected ApplicationProcurementMilestoneService applicationProcurementMilestoneService;
+    protected CompetitionApplicationConfigService competitionApplicationConfigService;
+    protected MilestoneRepository milestoneRepository;
+    protected AssessmentPeriodRepository assessmentPeriodRepository;
+    protected QuestionnaireService questionnaireService;
+    protected QuestionnaireQuestionService questionnaireQuestionService;
+    protected QuestionnaireResponseService questionnaireResponseService;
+    protected QuestionnaireQuestionResponseService questionnaireQuestionResponseService;
+    protected QuestionnaireOptionService questionnaireOptionService;
+    protected QuestionnaireTextOutcomeService questionnaireTextOutcomeService;
+    protected ApplicationOrganisationQuestionnaireResponseRepository applicationOrganisationQuestionnaireResponseRepository;
+    protected QuestionnaireResponseRepository questionnaireResponseRepository;
 
     private static Cache<Long, List<QuestionResource>> questionsByCompetitionId = CacheBuilder.newBuilder().build();
 
@@ -355,6 +374,17 @@ public abstract class BaseDataBuilder<T, S> extends BaseBuilder<T, S> {
         inviteUserService = serviceLocator.getBean(InviteUserService.class);
         supporterAssignmentService = serviceLocator.getBean(SupporterAssignmentService.class);
         applicationProcurementMilestoneService = serviceLocator.getBean(ApplicationProcurementMilestoneService.class);
+        competitionApplicationConfigService = serviceLocator.getBean(CompetitionApplicationConfigService.class);
+        milestoneRepository = serviceLocator.getBean(MilestoneRepository.class);
+        assessmentPeriodRepository = serviceLocator.getBean(AssessmentPeriodRepository.class);
+        questionnaireService = serviceLocator.getBean(QuestionnaireService.class);
+        questionnaireQuestionService = serviceLocator.getBean(QuestionnaireQuestionService.class);
+        questionnaireResponseService = serviceLocator.getBean(QuestionnaireResponseService.class);
+        questionnaireQuestionResponseService = serviceLocator.getBean(QuestionnaireQuestionResponseService.class);
+        questionnaireOptionService = serviceLocator.getBean(QuestionnaireOptionService.class);
+        questionnaireTextOutcomeService = serviceLocator.getBean(QuestionnaireTextOutcomeService.class);
+        applicationOrganisationQuestionnaireResponseRepository = serviceLocator.getBean(ApplicationOrganisationQuestionnaireResponseRepository.class);
+        questionnaireResponseRepository = serviceLocator.getBean(QuestionnaireResponseRepository.class);
     }
 
     protected UserResource compAdmin() {
@@ -371,6 +401,10 @@ public abstract class BaseDataBuilder<T, S> extends BaseBuilder<T, S> {
 
     protected UserResource ifsAdmin() {
         return retrieveUserByEmailInternal("arden.pimenta@innovateuk.test", IFS_ADMINISTRATOR);
+    }
+
+    protected UserResource superAdmin() {
+        return retrieveUserByEmailInternal("bucky.barnes@innovateuk.test", SUPER_ADMIN_USER);
     }
 
     protected UserResource retrieveUserByEmail(String emailAddress) {
@@ -396,7 +430,7 @@ public abstract class BaseDataBuilder<T, S> extends BaseBuilder<T, S> {
         return fromCache(applicationId, leadApplicantsByApplicationId, () ->
                 doAs(compAdmin(), () ->
                 simpleFindFirst(usersRolesService.getProcessRolesByApplicationId(applicationId).
-                        getSuccess(), pr -> pr.getRole() == LEADAPPLICANT).get()));
+                        getSuccess(), pr -> pr.getRole() == ProcessRoleType.LEADAPPLICANT).get()));
     }
 
     protected Organisation retrieveOrganisationByName(String organisationName) {
@@ -437,7 +471,7 @@ public abstract class BaseDataBuilder<T, S> extends BaseBuilder<T, S> {
             return processRoleRepository.findByUserAndApplicationId(userRepository.findById(user.getId()).get(),
                     application.getId())
                     .stream()
-                    .filter(x -> x.getRole() == ASSESSOR)
+                    .filter(x -> x.getRole() == ProcessRoleType.ASSESSOR)
                     .findFirst()
                     .get();
         });

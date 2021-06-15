@@ -224,23 +224,24 @@ Applicant uploads the contract
 
 Applicant uploads the GOL using Docusign
     [Arguments]  ${projectID}  ${date}
-    the user navigates to the page            ${server}/project-setup/project/${projectID}
-    the user clicks the button/link           jquery = a:contains("Grant offer letter")
-    the user clicks the button/link           jquery = a:contains("review and sign the grant offer letter")
-    the user should see the element           css=.page.page-loaded
-    the user should see the element           jQuery = span:contains("Please review the documents below.")
-    the user selects the checkbox             disclosureAccepted
-    the user clicks the button/link           jQuery = button:contains("Continue")
-    the user clicks the button/link           jQuery = span:contains("Start")
-    the user clicks the button/link           css = div.initials-tab-content
-    the user should see the element           css=.page.page-loaded
-    The user enters text to a docusign field  jQuery = .text-tab:not(.locked):first input  ${date}
-    the user should see the element           css=.page.page-loaded
-    the user clicks the button/link           jQuery = span:contains("Fill In")
-    The user enters text to a docusign field  jQuery = .text-tab:not(.locked):first ~ .text-tab:not(.locked) input   ${date}
-    the user clicks the button/link           css = div.signature-tab-content
-    the user clicks the button/link           css = div.documents-finish-button-decoration
-    the user should see the element           jQuery = h1:contains("Grant offer letter")
+    the user navigates to the page                                           ${server}/project-setup/project/${projectID}
+    the user clicks the button/link                                          jquery = a:contains("Grant offer letter")
+    the user clicks the button/link                                          jquery = a:contains("review and sign the grant offer letter")
+    the user should see the element                                          css=.page.page-loaded
+    the user accepts electronic record and signature disclosure if exist
+    the user should see the element                                          jQuery = span:contains("Please review the documents below.")
+    the user clicks the button/link                                          jQuery = button:contains("Continue")
+    the user clicks the button/link                                          jQuery = span:contains("Start")
+    the user clicks the button/link                                          css = div.initials-tab-content
+    the user adopts initial details if exist
+    the user should see the element                                          css=.page.page-loaded
+    The user enters text to a docusign field                                 jQuery = .text-tab:not(.locked):first input  ${date}
+    the user should see the element                                          css=.page.page-loaded
+    the user clicks the button/link                                          jQuery = span:contains("Fill In")
+    The user enters text to a docusign field                                 jQuery = .text-tab:not(.locked):first ~ .text-tab:not(.locked) input   ${date}
+    the user clicks the button/link                                          css = div.signature-tab-content
+    the user clicks the button/link                                          css = div.documents-finish-button-decoration
+    the user should see the element                                          jQuery = h1:contains("Grant offer letter")
 
 the GOL has already been approved
     [Arguments]  ${projectID}
@@ -419,18 +420,15 @@ the project finance user moves ${FUNDERS_PANEL_COMPETITION_NAME} into project se
     the user should see the element         jQuery = td:contains("Successful")
     the user clicks the button/link         jQuery = a:contains("Competition")
     the user clicks the button/link         jQuery = a:contains("Manage funding notifications")
-    Set Focus To Element                    css = label[for = "app-row-103"]
-    the user selects the checkbox           app-row-103
-    Set Focus To Element                    css = label[for = "app-row-104"]
-    the user selects the checkbox           app-row-104
+    the user clicks the button/link         id = select-all-1
     the user clicks the button/link         jQuery = .govuk-button:contains("Write and send email")
     the internal sends the descision notification email to all applicants  EmailTextBody
     the user refreshes until element appears on page         jQuery = td:contains("Sent")
-    the user should see the element         jQuery = h1:contains("Manage funding applications")
+    the user should see the element         jQuery = h1:contains("Manage funding decisions and notifications")
 
 lead partner navigates to project and fills project details
     log in as a different user            &{lead_applicant_credentials}
-    project lead submits project details and team  ${FUNDERS_PANEL_APPLICATION_1_PROJECT}
+    project lead submits project details and team  ${FUNDERS_PANEL_APPLICATION_1_PROJECT}   projectManager2
 
 project lead submits project address
     [Arguments]  ${project_id}
@@ -441,10 +439,10 @@ project lead submits project address
     the user clicks the button/link               jQuery = button:contains("Save address")
 
 project lead submits project details and team
-    [Arguments]  ${project_id}
+    [Arguments]  ${project_id}  ${projectManager}
     project lead submits project address    ${project_id}
     the user navigates to the page     ${server}/project-setup/project/${project_id}/team/project-manager
-    the user selects the radio button  projectManager  projectManager2
+    the user selects the radio button  projectManager  ${projectManager}
     the user clicks the button/link    jQuery = .govuk-button:contains("Save")
     the user navigates to the page     ${server}/project-setup/project/${project_id}/team
 
@@ -799,11 +797,15 @@ the user should see project is live with review its progress link
     the user should see the element     jQuery = p:contains("${reviewProgressMessage}")
     the user should see the element     link = ${reviewProgressLink}
 
-Internal user assigns MO to application
+internal user assigns MO to application
     [Arguments]  ${applicationID}  ${applicationTitle}  ${MO_name}  ${MO_fullname}
     the user navigates to the page                    ${server}/project-setup-management/monitoring-officer/view-all
     Search for MO                                     ${MO_name}  ${MO_fullname}
     The internal user assign project to MO            ${applicationID}  ${applicationTitle}
+
+confirm viability and eligibility
+    confirm viability       0
+    confirm eligibility     0
 
 confirm viability
     [Arguments]  ${viability}
@@ -823,16 +825,109 @@ confirm eligibility
     the user clicks the button/link                         name = confirm-eligibility   #Pop-up confirmation button
     the user clicks the button/link                         link = Return to finance checks
 
+confirm milestone
+    [Arguments]  ${milestone}
+    the user clicks the button/link     jQuery = table.table-progress tr:nth-child(1) td:nth-child(6) a:contains("Review")
+    the user selects the checkbox       approve-milestones
+    the user clicks the button/link     css = #confirm-button
+    the user clicks the button/link     jQuery = div:nth-child(5) button:contains("Approve payment milestones")
+    the user clicks the button/link     link = Return to finance checks
+
+the internal user approves the viability
+    the user clicks the button/link                         jQuery = table.table-progress tr:nth-child(1) td:nth-child(2) a:contains("Review")
+    the user selects the checkbox                           project-viable
+    the user selects the option from the drop-down menu     Green  id = rag-rating
+    the user clicks the button/link                         css = #confirm-button
+    the user clicks the button/link                         css = [name="confirm-viability"]
+    the user clicks the button/link                         link = Back to finance checks
+
+the internal user approves the eligibility
+    the user clicks the button/link                         jQuery = table.table-progress tr:nth-child(1) td:nth-child(4) a:contains("Review")
+    the user selects the checkbox                           project-eligible
+    the user selects the option from the drop-down menu     Green  id = rag-rating
+    the user clicks the button/link                         css = #confirm-button
+    the user clicks the button/link                         css = [name="confirm-eligibility"]
+    the user clicks the button/link                         link = Return to finance checks
+
+the internal user approves the payment milestones
+    the user clicks the button/link     jQuery = table.table-progress tr:nth-child(1) td:nth-child(6) a:contains("Review")
+    the user selects the checkbox       approve-milestones
+    the user clicks the button/link     css = #confirm-button
+    the user clicks the button/link     jQuery = div:nth-child(5) button:contains("Approve payment milestones")
+    the user clicks the button/link     link = Return to finance checks
+
+the user reverts the milestones eligibility and viability
+    the internal user reverts the payment milestones
+    the internal user reverts the eligibility
+    the internal user reverts the viability
+
+the internal user reverts the payment milestones
+    the user clicks the button/link          jQuery = table.table-progress tr:nth-child(1) td:nth-child(6) a:contains("Approved")
+    the user clicks the button/link          jQuery = span:contains("Reset payment milestone check")
+    the user clicks the button/link          jQuery = button:contains("Reset payment milestone check")
+    the user clicks the button/link          jQuery = span:contains("Enter a reason for the reset")
+    the user enters text to a text field     id = retractionReason   Reset
+    the user clicks the button/link          jQuery = button:contains("Reset payment milestone check")
+    the user clicks the button/link          link = Return to finance checks
+
+the internal user reverts the eligibility
+    the user clicks the button/link          jQuery = table.table-progress tr:nth-child(1) td:nth-child(4) a:contains("Approved")
+    the user clicks the button/link          jQuery = span:contains("Reset eligibility check")
+    the user clicks the button/link          jQuery = button:contains("Reset eligibility check")
+    the user clicks the button/link          jQuery = span:contains("Enter a reason for the reset")
+    the user enters text to a text field     id = retractionReason   Reset
+    the user clicks the button/link          jQuery = button:contains("Reset eligibility check")
+    the user clicks the button/link          link = Return to finance checks
+
+the internal user reverts the viability
+    the user clicks the button/link          jQuery = table.table-progress tr:nth-child(1) td:nth-child(2) a:contains("Approved")
+    the user clicks the button/link          jQuery = span:contains("Reset viability check")
+    the user clicks the button/link          jQuery = button:contains("Reset viability check")
+    the user clicks the button/link          jQuery = span:contains("Enter a reason for the reset")
+    the user enters text to a text field     id = retractionReason   Reset
+    the user clicks the button/link          jQuery = button:contains("Reset viability check")
+    the user clicks the button/link          link = Back to finance checks
+
+the user edits the payment milestone
+     the user clicks the button/link                        id = edit
+     the user clicks the button/link                        jQuery = button:contains("Open all")
+     the user enters multiple strings into a text field     id = milestones[1].taskOrActivity    This is an edited text${SPACE}    3
+     the user clicks the button/link                        jQuery = button:contains("Save and return to payment milestone check")
+
+the internal user approves payment milestone
+    the user selects the checkbox       approve-milestones
+    the user clicks the button/link     id = confirm-button   #Page confirmation button
+    the user clicks the button/link     jQuery = h2:contains("Approve payment milestones") ~ div button:contains("Approve payment milestones")   #Pop-up confirmation button
+
 the internal user approve the contract
     [Arguments]  ${projectID}
-    log in as a different user          &{internal_finance_credentials}
-    the user navigates to the page      ${server}/project-setup-management/project/${projectID}/grant-offer-letter/send
-    the user selects the radio button   APPROVED  acceptGOL
-    the user clicks the button/link     id = submit-button
-    the user clicks the button/link     id = accept-signed-gol
-    the user should see the element     jQuery = .success-alert h2:contains("These documents have been approved.")
+    log in as a different user            &{internal_finance_credentials}
+    the user navigates to the page        ${server}/project-setup-management/project/${projectID}/grant-offer-letter/send
+    the user selects the radio button     APPROVED  acceptGOL
+    the user clicks the button/link       id = submit-button
+    the user clicks the button/link       id = accept-signed-gol
+    the user should see the element       jQuery = .success-alert h2:contains("These documents have been approved.")
 
 organisation is able to accept project invite
     [Arguments]  ${fname}  ${sname}  ${email}  ${applicationID}  ${appTitle}
     logout as user
     the user reads his email and clicks the link     ${email}  Invitation to join project ${applicationID}: ${appTitle}  You have been invited to join the project ${appTitle}
+
+the user approves funding rules
+    [Arguments]  ${reviewLinkElement}
+    the user clicks the button/link     jQuery = ${reviewLinkElement}
+    the user selects the checkbox       project-funding-rules
+    the user clicks the button/link     id = confirm-button
+    the user clicks the button/link     jQuery = a:contains("Return to finance checks")
+
+the user approves funding rules of lead and partner
+    the user approves funding rules     table.table-progress tr:nth-child(1) td:nth-child(2) a:contains("Review")
+    the user approves funding rules     table.table-progress tr:nth-child(2) td:nth-child(2) a:contains("Review")
+
+the user accepts electronic record and signature disclosure if exist
+    ${STATUS}    ${VALUE} =   Run Keyword And Ignore Error Without Screenshots   page should contain element   link = Electronic Record and Signature Disclosure
+    Run Keyword If  '${status}' == 'PASS'    the user selects the checkbox     disclosureAccepted
+
+the user adopts initial details if exist
+    ${STATUS}    ${VALUE} =   Run Keyword And Ignore Error Without Screenshots   page should contain element   jQuery = button:contains("Adopt and Initial")
+    Run Keyword If  '${status}' == 'PASS'    the user clicks the button/link     jQuery = button:contains("Adopt and Initial")
